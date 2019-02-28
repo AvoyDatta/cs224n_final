@@ -5,9 +5,6 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 	output: Tensor of sive (seq_len,batch_size,input_size=7)
 	"""
 
-	# with open(input_csv_path,'r') as f: 
-	# 	data = [row for row in csv.reader(f.read().splitlines())]
-
 	with open(input_csv_path,'r') as csvfile:
 		reader = csv.reader(csvfile,delimiter=",")
 		data = []
@@ -27,7 +24,6 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 				else:
 					new_timeseq.append(row[index])
 			data_dict[keys[index]] = new_timeseq
-		# return data_dict
 
 		#calculate Stoch_K 
 		data_length = len(data_dict['High'])
@@ -40,8 +36,6 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 				HH_n = data_dict['High'][t]
 				LL_n = data_dict['Low'][t]
 			elif t < n: 
-				# print(i)
-				# print(data_dict['High'][1:i])
 				assert len(data_dict['High'][:t]) < n
 				HH_n = max(data_dict['High'][:t])
 				LL_n = max(data_dict['Low'][:t])
@@ -110,8 +104,6 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 				HH_n = data_dict['High'][t]
 				LL_n = data_dict['Low'][t]
 			elif t < n: 
-				# print(i)
-				# print(data_dict['High'][1:i])
 				assert len(data_dict['High'][:t]) < n
 				HH_n = max(data_dict['High'][:t])
 				LL_n = max(data_dict['Low'][:t])
