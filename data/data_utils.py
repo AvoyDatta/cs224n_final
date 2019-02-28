@@ -147,10 +147,21 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 				assert len(data_dict['Close'][t-5:t]) == 5
 				MA = sum(data_dict['Close'][t-5:t]) / 5
 			new_timeseq.append(100 * C_t / MA)
-
 		data_dict['Disp'] = new_timeseq
 		assert len(data_dict['Disp'])==data_length
-		print(data_length)
-		return data_dict
+		# print(data_length)
+		tensor = np.array([data_dict['Stoch_K'],data_dict['Stoch_D'],data_dict['Momentum'],data_dict['ROC'],data_dict['WillR'],data_dict['AD'],data_dict['Disp']])
+		# print(tens.shape)
+		# print(tens.shape)
+		sequence_len = tensor.shape[1]
+		stack = []
+		for i in range(n,sequence_len): 
+		    value = tensor[:,np.newaxis,i-n:i]
+		    stack.append(value)
+		new_tensor = np.concatenate(stack,1)
+		# print(new_tensor.shape)
+		new_tensor = torch.Tensor(new_tensor)
+		# print(new_tensor.shape)
+		return new_tensor
 
 
