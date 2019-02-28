@@ -1,4 +1,7 @@
 import csv
+import torch
+import numpy as np
+
 def loadTechnical(input_csv_path,n=5,input_size=7):
 	"""
 	input_csv_path: path to csv
@@ -147,4 +150,7 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 
 		data_dict['Disp'] = new_timeseq
 		assert len(data_dict['Disp'])==data_length
+		print(data_length)
 		return data_dict
+
+
