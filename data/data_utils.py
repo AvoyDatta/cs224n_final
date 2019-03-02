@@ -205,25 +205,29 @@ def loadTitle(input_csv_path):
 	# model = gensim.models.KeyedVectors.load_word2vec_format('./lexvec.pos.vectors', binary=True)
 	# model = gensim.models.KeyedVectors.load_word2vec_format('lexvec.enwiki+newscrawl.300d.W.pos.vectors', binary=True)
 	
-
+	### LOAD MODEL FROM SCRATCH
 	# https://nlp.stanford.edu/projects/glove/ : glove.6b.zip
-	glove_file = 'glove.6B.50d.txt'
-	tmp_file = get_tmpfile("test_word2vec.txt")
+	# glove_file = 'glove.6B.50d.txt'
+	# tmp_file = get_tmpfile("test_word2vec.txt")
 
-	_ = glove2word2vec(glove_file, tmp_file)
+	# _ = glove2word2vec(glove_file, tmp_file)
 
-	model = KeyedVectors.load_word2vec_format(tmp_file)
+	# model = KeyedVectors.load_word2vec_format(tmp_file)
+
+	# model.save("glove_word2vec.model")
+
+	### LOAD PREVIOUSLY SAVED MODEL
+	model = KeyedVectors.load('glove_word2vec.model')
 	vocab = model.vocab.keys()
 
 	#convert titles to word2vec
 	word2vec_data = []
 
-	# print("\n\nHit this")
 	embed_size = 50 # 50 for glove.6B.50d. will be 300 for goog news
 
 	for i in range(len(data)):
 		headline_list = []
-		
+
 		for headline in data[i][2:]:
 			word_vecs = np.concatenate(np.array([[model[word] for word in nltk.word_tokenize(headline) if word in vocab]]))
 			
@@ -267,6 +271,6 @@ def loadTitle(input_csv_path):
 
 # to test
 
-# loadTitle('Combined_News_DJIA.csv')
+loadTitle('Combined_News_DJIA.csv')
 
 
