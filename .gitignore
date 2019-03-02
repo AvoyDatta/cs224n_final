@@ -3,3 +3,14 @@ data/__MACOSX/._stocknews
 *.csv
 data/.ipynb_checkpoints/Untitled-checkpoint.ipynb
 data/Untitled.ipynb
+data/.DS_Store
+.DS_Store
+data/GoogleNews-vectors-negative300.bin
+data/lexvec.enwiki+newscrawl.300d.W.pos.vectors.gz
+data/lexvec.pos.vectors
+data/.DS_Store
+.DS_Store
+data/.DS_Store
+.DS_Store
+data/.DS_Store
+.DS_Store

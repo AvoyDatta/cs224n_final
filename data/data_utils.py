@@ -1,11 +1,20 @@
 import csv
 import torch
 import numpy as np
+import gensim
+from gensim.models import KeyedVectors
+from gensim.test.utils import datapath
+from gensim.test.utils import datapath, get_tmpfile
+from gensim.scripts.glove2word2vec import glove2word2vec
+import nltk
+from collections import defaultdict
+from functools import partial
+# nltk.download('punkt')
 
 def loadTechnical(input_csv_path,n=5,input_size=7):
 	"""
 	input_csv_path: path to csv
-	output: Tensor of sive (seq_len,batch_size,input_size=7)
+	output: Tensor of size (seq_len,batch_size,input_size=7)
 	"""
 
 	with open(input_csv_path,'r') as csvfile:
@@ -17,16 +26,16 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 		data.reverse()
 		# return data
 		data_dict = {} #dictionary containing header-> timesequence
-
 		keys = data[-1]
 		for index in range(len(keys)): 
 			new_timeseq = []
-			for row in data[:-1]:
+			for row in data[:-2]:
 				if keys[index] != 'Date':
 					new_timeseq.append(float(row[index]))
 				else:
 					new_timeseq.append(row[index])
 			data_dict[keys[index]] = new_timeseq
+
 
 		#calculate Stoch_K 
 		data_length = len(data_dict['High'])
@@ -161,7 +170,103 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 		new_tensor = np.concatenate(stack,1)
 		# print(new_tensor.shape)
 		new_tensor = torch.Tensor(new_tensor)
+
+		new_tensor = new_tensor.permute(2,1,0)
 		# print(new_tensor.shape)
 		return new_tensor
+
+def loadTitle(input_csv_path):
+	"""
+	input: input_csv_path
+	output: Tuple(Tensor of size (batch_size,channels=num_titles,seq_len=300),targets)
+	"""
+	with open(input_csv_path,'r') as csvfile:
+		reader = csv.reader(csvfile,delimiter=",")
+		data = []
+		for row in reader:
+			data.append(row)
+	keys = data[0]
+	# sanitize input
+	for i in range(len(data)): 
+		# print(len(data[i]))
+		for j in range(len(data[i])):
+			if data[i][j][0] == 'b':
+				data[i][j] = data[i][j][1:]
+
+	targets = []
+	for i in range(1,len(data)-1):
+		targets.append(float(data[i+1][1]))
+	# print(len(targets))
+	data = data[1:-1]
+
+	assert(len(targets) == len(data))
+
+	#ToDo Only look up models if word2vec.csv doesn't exist 
+	# model = gensim.models.KeyedVectors.load_word2vec_format('./lexvec.pos.vectors', binary=True)
+	# model = gensim.models.KeyedVectors.load_word2vec_format('lexvec.enwiki+newscrawl.300d.W.pos.vectors', binary=True)
+	
+
+	# https://nlp.stanford.edu/projects/glove/ : glove.6b.zip
+	glove_file = 'glove.6B.50d.txt'
+	tmp_file = get_tmpfile("test_word2vec.txt")
+
+	_ = glove2word2vec(glove_file, tmp_file)
+
+	model = KeyedVectors.load_word2vec_format(tmp_file)
+	vocab = model.vocab.keys()
+
+	#convert titles to word2vec
+	word2vec_data = []
+
+	# print("\n\nHit this")
+	embed_size = 50 # 50 for glove.6B.50d. will be 300 for goog news
+
+	for i in range(len(data)):
+		headline_list = []
+		
+		for headline in data[i][2:]:
+			word_vecs = np.concatenate(np.array([[model[word] for word in nltk.word_tokenize(headline) if word in vocab]]))
+			
+			# in case headline has no words that appear in model vocab. 
+			# happened in about 600 articles using glove embeddings,
+			# but should not be too common with Google News trained embeddings
+			if len(word_vecs) == 0:
+				word_vecs = np.zeros((1, 50))
+
+			headline_vec = np.mean(word_vecs, axis=0) # [np.newaxis,:]
+			headline_list.append(headline_vec)
+
+		headline_list = np.stack(headline_list, axis=-1)
+
+		# pad if < 25 headlines
+		if headline_list.shape != (embed_size,25):
+			# print("oops")
+			# print(headline_list.shape)
+			_,m = headline_list.shape
+			n = 25
+			a = np.zeros((embed_size,25))
+			a[:,:m]= headline_list
+			headline_list = a 
+			# print('changed to: ',headline_list.shape)
+		word2vec_data.append(headline_list)
+
+	# #batch_size,300,25
+
+	word2vec_data = np.stack(word2vec_data,axis=0)
+	new_tensor = torch.Tensor(word2vec_data)
+
+	# #batch_size,25,300
+	new_tensor = new_tensor.permute(0,2,1)
+	new_tensor = new_tensor[5:,:,:]
+	targets = torch.Tensor(targets[5:])
+
+	# print(new_tensor.shape)
+	# print(new_tensor)
+	return (targets,new_tensor)
+
+
+# to test
+
+# loadTitle('Combined_News_DJIA.csv')
 
 
