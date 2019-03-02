@@ -14,7 +14,8 @@ class Config():
 				filter_sz = 4,
 				n_filters = 64, 
 				window_len = 5,
-				p_drop = 0.5
+				p_drop = 0.5,
+				num_batches = 1000
 				):
 
 		self.num_titles = num_titles
@@ -30,6 +31,7 @@ class Config():
 		self.n_filters = n_filters,
 		self.pool_sz = pool_sz,
 		self.batch_sz = batch_sz
+		self.num_batches = num_batches
 		self.p_drop = p_drop
 
 """
@@ -53,8 +55,9 @@ class RCNN(nn.Module):
 		self.lstm2 = nn.LSTM(hidden_dim, config.n_hidden_LSTM_tech)
 
 		#Linearly project final hidden states from LSTM to sigmoid output
-		self.map_to_out = nn.Linear(config.n_hidden_LSTM_titles + config.n_hidden_LSTM_tech, 
+		self.map_to_out = nn.Linear(2 * (config.n_hidden_LSTM_titles + config.n_hidden_LSTM_tech), 
 									config.n_outputs)
+
 		self.softmax = nn.Softmax() #MIGHT NEED TO EDIT DIM LATER
 		
 	"""
@@ -91,5 +94,5 @@ class RCNN(nn.Module):
 
 		return output
 
-	
+
 
