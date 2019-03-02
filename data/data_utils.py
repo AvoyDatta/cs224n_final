@@ -191,7 +191,7 @@ def loadTitle(input_csv_path):
 
 	targets = []
 	for i in range(1,len(data)-1):
-		targets.append(data[i+1][1])
+		targets.append(float(data[i+1][1]))
 	# print(len(targets))
 	data = data[1:-1]
 
@@ -237,9 +237,11 @@ def loadTitle(input_csv_path):
 
 	#batch_size,25,300
 	new_tensor = new_tensor.permute(0,2,1)
+	new_tensor = new_tensor[5:,:,:]
+	targets = torch.Tensor(targets[5:])
 
 
-	return word2vec_data
+	return (targets,new_tensor)
 
 
 
