@@ -2,10 +2,14 @@ import csv
 import torch
 import numpy as np
 import gensim
+from gensim.models import KeyedVectors
+from gensim.test.utils import datapath
+from gensim.test.utils import datapath, get_tmpfile
+from gensim.scripts.glove2word2vec import glove2word2vec
 import nltk
 from collections import defaultdict
 from functools import partial
-nltk.download('punkt')
+# nltk.download('punkt')
 
 def loadTechnical(input_csv_path,n=5,input_size=7):
 	"""
@@ -199,51 +203,69 @@ def loadTitle(input_csv_path):
 
 	#ToDo Only look up models if word2vec.csv doesn't exist 
 	# model = gensim.models.KeyedVectors.load_word2vec_format('./lexvec.pos.vectors', binary=True)
-	# vocab = model.vocab
+	# model = gensim.models.KeyedVectors.load_word2vec_format('lexvec.enwiki+newscrawl.300d.W.pos.vectors', binary=True)
+	
 
-	#TODO: Fill in this with an actual model, currently using dummy default dict of correct size
-	model = defaultdict(lambda: np.zeros(300))
-	vocab = model
-	# print(model['a'].shape)
+	# https://nlp.stanford.edu/projects/glove/ : glove.6b.zip
+	glove_file = 'glove.6B.50d.txt'
+	tmp_file = get_tmpfile("test_word2vec.txt")
+
+	_ = glove2word2vec(glove_file, tmp_file)
+
+	model = KeyedVectors.load_word2vec_format(tmp_file)
+	vocab = model.vocab.keys()
+
 	#convert titles to word2vec
 	word2vec_data = []
 
 	# print("\n\nHit this")
+	embed_size = 50 # 50 for glove.6B.50d. will be 300 for goog news
+
 	for i in range(len(data)):
-		# for element in data[i][2:]:
-		# 	for word in nltk.word_tokenize(element):
-		# 		if word in vocab:
-		# 			print(word)
+		headline_list = []
+		
+		for headline in data[i][2:]:
+			word_vecs = np.concatenate(np.array([[model[word] for word in nltk.word_tokenize(headline) if word in vocab]]))
+			
+			# in case headline has no words that appear in model vocab. 
+			# happened in about 600 articles using glove embeddings,
+			# but should not be too common with Google News trained embeddings
+			if len(word_vecs) == 0:
+				word_vecs = np.zeros((1, 50))
 
-		#TODO: add back if word in vocab
-		sentence_list = [ np.mean(np.concatenate([np.array(model[word])[:,np.newaxis]for word in nltk.word_tokenize(element) ],axis=1),axis=1) for element in data[i][2:]]
-		sentence_list = np.stack(sentence_list,axis=-1)
+			headline_vec = np.mean(word_vecs, axis=0) # [np.newaxis,:]
+			headline_list.append(headline_vec)
 
-		if sentence_list.shape != (300,25):
+		headline_list = np.stack(headline_list, axis=-1)
+
+		# pad if < 25 headlines
+		if headline_list.shape != (embed_size,25):
 			# print("oops")
-			# print(sentence_list.shape)
-			_,m = sentence_list.shape
+			# print(headline_list.shape)
+			_,m = headline_list.shape
 			n = 25
-			a = np.zeros((300,25))
-			a[:,:m]= sentence_list
-			sentence_list = a 
-			# print(sentence_list.shape)
-		word2vec_data.append(sentence_list)
+			a = np.zeros((embed_size,25))
+			a[:,:m]= headline_list
+			headline_list = a 
+			# print('changed to: ',headline_list.shape)
+		word2vec_data.append(headline_list)
 
-	#batch_size,300,25
+	# #batch_size,300,25
 
 	word2vec_data = np.stack(word2vec_data,axis=0)
 	new_tensor = torch.Tensor(word2vec_data)
 
-	#batch_size,25,300
+	# #batch_size,25,300
 	new_tensor = new_tensor.permute(0,2,1)
 	new_tensor = new_tensor[5:,:,:]
 	targets = torch.Tensor(targets[5:])
 
-
+	# print(new_tensor.shape)
 	return (targets,new_tensor)
 
 
+# to test
 
+# loadTitle('Combined_News_DJIA.csv')
 
 
