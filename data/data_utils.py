@@ -1,11 +1,16 @@
 import csv
 import torch
 import numpy as np
+import gensim
+import nltk
+from collections import defaultdict
+from functools import partial
+nltk.download('punkt')
 
 def loadTechnical(input_csv_path,n=5,input_size=7):
 	"""
 	input_csv_path: path to csv
-	output: Tensor of sive (seq_len,batch_size,input_size=7)
+	output: Tensor of size (seq_len,batch_size,input_size=7)
 	"""
 
 	with open(input_csv_path,'r') as csvfile:
@@ -17,16 +22,16 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 		data.reverse()
 		# return data
 		data_dict = {} #dictionary containing header-> timesequence
-
 		keys = data[-1]
 		for index in range(len(keys)): 
 			new_timeseq = []
-			for row in data[:-1]:
+			for row in data[:-2]:
 				if keys[index] != 'Date':
 					new_timeseq.append(float(row[index]))
 				else:
 					new_timeseq.append(row[index])
 			data_dict[keys[index]] = new_timeseq
+
 
 		#calculate Stoch_K 
 		data_length = len(data_dict['High'])
@@ -161,7 +166,82 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 		new_tensor = np.concatenate(stack,1)
 		# print(new_tensor.shape)
 		new_tensor = torch.Tensor(new_tensor)
+
+		new_tensor = new_tensor.permute(2,1,0)
 		# print(new_tensor.shape)
 		return new_tensor
+
+def loadTitle(input_csv_path):
+	"""
+	input: input_csv_path
+	output: Tuple(Tensor of size (batch_size,channels=num_titles,seq_len=300),targets)
+	"""
+	with open(input_csv_path,'r') as csvfile:
+		reader = csv.reader(csvfile,delimiter=",")
+		data = []
+		for row in reader:
+			data.append(row)
+	keys = data[0]
+	# sanitize input
+	for i in range(len(data)): 
+		# print(len(data[i]))
+		for j in range(len(data[i])):
+			if data[i][j][0] == 'b':
+				data[i][j] = data[i][j][1:]
+
+	targets = []
+	for i in range(1,len(data)-1):
+		targets.append(data[i+1][1])
+	# print(len(targets))
+	data = data[1:-1]
+
+	assert(len(targets) == len(data))
+
+	#ToDo Only look up models if word2vec.csv doesn't exist 
+	# model = gensim.models.KeyedVectors.load_word2vec_format('./lexvec.pos.vectors', binary=True)
+	# vocab = model.vocab
+
+	#TODO: Fill in this with an actual model, currently using dummy default dict of correct size
+	model = defaultdict(lambda: np.zeros(300))
+	vocab = model
+	print(model['a'].shape)
+	#convert titles to word2vec
+	word2vec_data = []
+
+	print("\n\nHit this")
+	for i in range(len(data)):
+		# for element in data[i][2:]:
+		# 	for word in nltk.word_tokenize(element):
+		# 		if word in vocab:
+		# 			print(word)
+
+		#TODO: add back if word in vocab
+		sentence_list = [ np.mean(np.concatenate([np.array(model[word])[:,np.newaxis]for word in nltk.word_tokenize(element) ],axis=1),axis=1) for element in data[i][2:]]
+		sentence_list = np.stack(sentence_list,axis=-1)
+
+		if sentence_list.shape != (300,25):
+			# print("oops")
+			# print(sentence_list.shape)
+			_,m = sentence_list.shape
+			n = 25
+			a = np.zeros((300,25))
+			a[:,:m]= sentence_list
+			sentence_list = a 
+			# print(sentence_list.shape)
+		word2vec_data.append(sentence_list)
+
+	#batch_size,300,25
+
+	word2vec_data = np.stack(word2vec_data,axis=0)
+	new_tensor = torch.Tensor(word2vec_data)
+
+	#batch_size,25,300
+	new_tensor = new_tensor.permute(0,2,1)
+
+
+	return word2vec_data
+
+
+
 
 
