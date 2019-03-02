@@ -204,11 +204,11 @@ def loadTitle(input_csv_path):
 	#TODO: Fill in this with an actual model, currently using dummy default dict of correct size
 	model = defaultdict(lambda: np.zeros(300))
 	vocab = model
-	print(model['a'].shape)
+	# print(model['a'].shape)
 	#convert titles to word2vec
 	word2vec_data = []
 
-	print("\n\nHit this")
+	# print("\n\nHit this")
 	for i in range(len(data)):
 		# for element in data[i][2:]:
 		# 	for word in nltk.word_tokenize(element):
