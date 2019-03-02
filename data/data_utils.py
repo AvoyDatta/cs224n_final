@@ -261,6 +261,7 @@ def loadTitle(input_csv_path):
 	targets = torch.Tensor(targets[5:])
 
 	# print(new_tensor.shape)
+	# print(new_tensor)
 	return (targets,new_tensor)
 
 
