@@ -32,7 +32,7 @@ class DJIA_Dataset(Dataset):
 		index: index of element in dataset you want
 		returns: tuple( technical_data(5,7), title_data(25,50),target(1)  )
 		"""
-		return self.technical_data[:,index,:], self.title_data[index,:,:], self.targets[index]
+		return {"titles":self.technical_data[:,index,:],"tech_indicators" :self.title_data[index,:,:],"movement": self.targets[index]}
 
 
 def loadTechnical(input_csv_path,n=5,input_size=7):
