@@ -15,8 +15,7 @@ class Config():
 				n_filters = 64, 
 				window_len = 5,
 				p_drop = 0.5,
-				num_batches = 1000
-				):
+				num_batches = 1000):
 
 		self.num_titles = num_titles
 		self.title_dim = title_dim
@@ -27,9 +26,9 @@ class Config():
 
 		self.n_outputs = n_outputs
 		self.window_len = window_len
-		self.filter_sz = filter_sz,
-		self.n_filters = n_filters,
-		self.pool_sz = pool_sz,
+		self.filter_sz = filter_sz
+		self.n_filters = n_filters
+		self.pool_sz = pool_sz
 		self.batch_sz = batch_sz
 		self.num_batches = num_batches
 		self.p_drop = p_drop
@@ -47,12 +46,13 @@ class RCNN(nn.Module):
 		super(RCNN,self).__init__()
 		self.config = config
 
+		print(config.__dict__.values())
 		self.cnn = nn.Conv1d(config.title_dim, config.n_filters, config.filter_sz)
 		self.max_pool = nn.MaxPool1d(config.pool_sz, stride = 1, padding = 1) #Dim increases by 1
 		self.relu = nn.ReLU()
 		self.dropout = nn.Dropout(config.p_drop)
-		self.lstm1 = nn.LSTM(config.input_dim, config.n_hidden_LSTM_titles)
-		self.lstm2 = nn.LSTM(hidden_dim, config.n_hidden_LSTM_tech)
+		self.lstm1 = nn.LSTM(config.input_dim_1, config.n_hidden_LSTM_titles)
+		self.lstm2 = nn.LSTM(config.input_dim_2, config.n_hidden_LSTM_tech)
 
 		#Linearly project final hidden states from LSTM to sigmoid output
 		self.map_to_out = nn.Linear(2 * (config.n_hidden_LSTM_titles + config.n_hidden_LSTM_tech), 
