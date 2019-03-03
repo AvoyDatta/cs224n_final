@@ -14,3 +14,10 @@ data/.DS_Store
 .DS_Store
 data/.DS_Store
 .DS_Store
+data/glove.6B.50d.txt
+data/glove.6B.zip
+data/glove.6B/glove.6B.100d.txt
+data/glove.6B/glove.6B.200d.txt
+data/glove.6B/glove.6B.300d.txt
+data/glove_word2vec.model
+data/glove_word2vec.model.vectors.npy
