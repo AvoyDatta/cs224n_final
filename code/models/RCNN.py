@@ -21,7 +21,7 @@ class Config():
 		self.title_dim = title_dim
 		self.n_hidden_LSTM_titles = n_hidden_LSTM_titles
 		self.n_hidden_LSTM_tech = n_hidden_LSTM_tech
-		self.input_dim_1 = filter_sz
+		self.input_dim_1 = n_filters
 		self.input_dim_2 = n_tech_indicators
 
 		self.n_outputs = n_outputs
@@ -59,6 +59,7 @@ class RCNN(nn.Module):
 									config.n_outputs)
 
 		self.softmax = nn.Softmax() #MIGHT NEED TO EDIT DIM LATER
+		self.criterion = nn.NLLLoss(reduction = True, reduce = 'mean')
 		
 	"""
 	Forward pass for the RCNN.
@@ -70,58 +71,67 @@ class RCNN(nn.Module):
 	def forward(self, titles, tech_indicators):
 		
 		#Input: (batch_sz, sent_embed_sz, num_titles), i.e. (batch, m, L) in paper
+		# print(titles.shape)
 		conv_out = self.cnn(titles) #Out: (batch, num_filters, L - R + 1) , R is window length
+		# print(conv_out.shape)
 		pool_out = self.max_pool(conv_out) #Out: (batch, num_filters, L - R + 2)
-
+		# print(pool_out.shape)
 		relud_pool = self.relu(pool_out) #(batch, num_filters, L - R + 2)
-
+		# print(relud_pool.shape)
 		dropped_relu = self.dropout(relud_pool) #(batch, num_filters, L - R + 2) #NOT SURE ABOUT DIMENSION DROPPED
-
+		# print(dropped_relu.shape)
 		relud_pool_reshaped = relud_pool.permute(2, 0, 1)
 
 		#Input : (seq_len, batch, input_dim)
+		# print(relud_pool_reshaped.shape)
 		_, (last_hidden_1, last_cell_1) = self.lstm1(relud_pool_reshaped) #Both hidden & cell are (1, batch, hidden_size)
 		last_hidden_1, last_cell_1 = last_hidden_1.squeeze(0), last_cell_1.squeeze(0) # Both are now (batch, hidden_size)
 		
-
-		_, (last_hidden_1, last_cell_1) = self.lstm2(tech_indicators)
+		# print(last_hidden_1.shape)
+		# print(tech_indicators.shape)
+		_, (last_hidden_2, last_cell_2) = self.lstm2(tech_indicators.permute(1,0,2))
 		last_hidden_2, last_cell_2 = last_hidden_2.squeeze(0), last_cell_2.squeeze(0) # Both are now (batch, hidden_size)
 		
-
+		# print(last_hidden_2.shape)
 		concatenated = torch.cat((last_hidden_1, last_cell_1, last_hidden_2, last_cell_2), 1) #(batch, 2*h_dim_1 + 2*h_dim_2)
 
 		output = self.softmax(self.map_to_out(concatenated)) #(batch, 2)
-
+		# print(output.shape)
 		return output
+
+	def backprop(self,optimizer, logits, labels):
+
+		optimizer.zero_grad()
+		loss = self.criterion(logits,labels)
+		loss.backward()
+		optimizer.step()
+		return loss
 
 
 if __name__ == "__main__":
-	batch_sz = 128
-	m_word = 20
-	e_char = 10
-	kernel_sz = 5
-	out_channels = 12
-	num_iters = 50000
+	config = Config()
 
-	model = CNN(e_char, out_channels, m_word)
+	model = RCNN(config)
+	# batch_sz, sent_embed_sz, num_titles)
+	tech_indicators = torch.randn(config.batch_sz, 5,7)
+	titles = torch.randn(config.batch_sz,config.title_dim,config.num_titles)
 
-	x = torch.randn(batch_sz, e_char, m_word)
-	y = torch.randn(batch_sz, out_channels)
-
-	criterion = torch.nn.MSELoss(reduction='sum')
+	y =torch.randint(0,2,(config.batch_sz,1))
+	y = torch.squeeze(y)
+	# print(y)
 	optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
-
+	num_iters=10000
 	for t in range(num_iters):
 	    # Forward pass: Compute predicted y by passing x to the model
-	    y_pred = model.forward(x)
+	    y_pred = model.forward(titles,tech_indicators)
+	    # print(y_pred)
+	    # y_pred = torch.randn(config.batch_sz,1)
 	    #print("y_pred shape: {}".format(y_pred.size()))
 	    # Compute and print loss
-	    loss = criterion(y_pred, y)
-	    if t % 1000 == 0: print(t, loss.item())
+	    loss = model.backprop(optimizer, y_pred, y)
+	    if t % 10== 0: print(t, loss.item())
 
 	    # Zero gradients, perform a backward pass, and update the weights.
-	    optimizer.zero_grad()
-	    loss.backward()
-	    optimizer.step()
+
 
 
