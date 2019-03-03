@@ -6,17 +6,16 @@ Baseline
 baseline.py
 
 Usage:
-	baseline.py train --batch_sz=<int> [options]
+	baseline.py train --batch_sz=<int> --num_batches=<int> --print_every=<int> --save_every=<int> --num_epochs=<int>
 	baseline.py test --batch_sz=<int> [options]
 
 Options:
-	--print_every=<int>               Specifies frequency of epochs with which metrics are printed
-	--save_every=<int>                Specifies frequency of epochs with which model is saved
-	--load_path=<file>                Path to load model from 
+	--num_batches=<int>               Number of minibatches per epoch[default:1000]
+	--print_every=<int>               Specifies frequency of epochs with which metrics are printed [default: 1]
+	--save_every=<int>                Specifies frequency of epochs with which model is saved [default: 5]
 	--data_path=<file>                Path to data
 	--num_epochs=<int>                Number of epochs to train for
-	--save_path=<file>                Path to save model to
-	--batch_sz=<int>                  Batch size[default:128]
+	--batch_sz=<int>                  Batch size [default: 128]
 """
 from docopt import docopt
 
@@ -27,7 +26,12 @@ from tqdm import tqdm
 import time
 import os
 import sys
-sys.path.insert(0, '../../data')
+# sys.path.append(os.path.join(os.getcwd(),'..\\..\\data'))
+# sys.path.append(os.path.join(os.getcwd(),'..\\..\\data\\glove.6B'))
+sys.path.append('../../data')
+sys.path.append('../../data/glove.6B')
+print(sys.path)
+
 import data_utils
 
 from RCNN import Config, RCNN
@@ -63,7 +67,6 @@ def train(args, config):
 	num_epochs = args['--num_epochs']
 	save_every = args['--save_every'] 
 	save_path = baseline_model_path 
-	load_path = args['--load_path'] 
 
 	#Stores hyperparams for model
 	
@@ -73,18 +76,19 @@ def train(args, config):
 
 	optimizer = torch.optim.SGD(model.parameters(), lr= baseline_step, momentum = baseline_momentum)
 
-	train_data_path = None if not args['--data_path'] else args['--data_path']
-	if train_data_path == None: 
-		raise Exception("Training data path not fed in.")
+	# train_data_path = args['--data_path'] 
+	# if train_data_path == None: 
+	# 	raise Exception("Training data path not fed in.")
 
-	print("Loading training data from {}".format(train_data_path))
+	# print("Loading training data from {}".format(train_data_path))
 
 
 	##############LOAD TRAIN DATA and initiate train
 
-	data_train = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv')
+	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv')
+	data_train = data[:1800]
 
-	dataloader_train = DataLoader(data_train, batch_size = config.batch_sz)
+	dataloader_train = DataLoader(data_train, batch_size = int(config.batch_sz))
 
 	print("Finished loading training data from {}".format(train_data_path))
 
@@ -98,13 +102,13 @@ def train(args, config):
 
 	init_epoch = 0
 
-	if (load_path != 'None'):  #If model is retrained from saved ckpt
+	# if (load_path != 'None'):  #If model is retrained from saved ckpt
 		
-		checkpoint = torch.load(load_path)
-		model.load_state_dict(checkpoint['model_state_dict'])
-		optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-		epoch = checkpoint['epoch']
-		loss = checkpoint['loss']
+	# 	checkpoint = torch.load(load_path)
+	# 	model.load_state_dict(checkpoint['model_state_dict'])
+	# 	optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+	# 	epoch = checkpoint['epoch']
+	# 	loss = checkpoint['loss']
 
 	model.train()
 
@@ -163,22 +167,25 @@ def test(args, config):
 
 	#Load saved model
 
-	test_data_path = None if not args['--data_path'] else args['--data_path'] 
-	if test_data_path == None: 
-		raise Exception("Test data path not fed in.")
+	# test_data_path = args['--data_path'] 
+	# if test_data_path == None: 
+	# 	raise Exception("Test data path not fed in.")
 
-	print("Loading test data from {}".format(train_data_path))
+	# print("Loading test data from {}".format(train_data_path))
 
 
 	##############LOAD TEST DATA and initiate dataloader as dataloader_test
 
-	data_test = ...
+	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv')
+
+	data_test = data[1800:]
+
 	dataloader_test = DataLoader(data_test, batch_size = config.batch_sz)
 
 	print("Finished loading training data from {}".format(train_data_path))
 
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-	load_path = baseline_model_path if not args['--load_path'] else args['--load_path']
+	load_path = baseline_model_path 
 
 	model = RCNN(config)
 	model.to(device)
@@ -228,13 +235,13 @@ def test(args, config):
 def main():
 	args = docopt(__doc__)
 
-	config = Config(batch_sz = args['--batch_sz'])
+	config = Config(batch_sz = int(args['--batch_sz']))
 
-	if args['--num_batches']: config.num_batches = args['--num_batches']
+	if args['--num_batches']: config.num_batches = int(args['--num_batches'])
 
 	if args['train']:
 
-		train_losses, train_accs, loss, accuracy = train(args, config, baseline_model_path)
+		train_losses, train_accs, loss, accuracy = train(args, config)
 		np.save(np.array(train_accs), 'train_accs.npy')
 		np.save(np.array(train_losses), 'train_losses.npy')
 		print("Final training loss: {}, Final Training Accuracy: {}".format(loss, accuracy))
