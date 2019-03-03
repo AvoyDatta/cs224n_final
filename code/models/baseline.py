@@ -1,15 +1,24 @@
-"""
-Main run file for baseline model.
-
-
-baseline.py can be run with the following opt arguments:
-	'train' OR 'test', [MANDATORY]
-	'--print_every', #Specifies frequency of epochs with which metrics are printed
-	'--save_every',  #Specifies frequency of epochs with which model is saved
-	'--batch_sz', #batch size of train or test
-	'--num_batches'
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 """
+Baseline
+baseline.py
+
+Usage:
+	baseline.py train --batch_sz=<int> [options]
+	baseline.py test --batch_sz=<int> [options]
+
+Options:
+	--print_every=<int>               Specifies frequency of epochs with which metrics are printed
+	--save_every=<int>                Specifies frequency of epochs with which model is saved
+	--load_path=<file>                Path to load model from 
+	--data_path=<file>                Path to data
+	--num_epochs=<int>                Number of epochs to train for
+	--save_path=<file>                Path to save model to
+	--batch_sz=<int>                  Batch size[default:128]
+"""
+from docopt import docopt
 
 import torch
 import torch.nn as nn
@@ -17,8 +26,10 @@ import numpy as np
 from tqdm import tqdm
 import time
 import os
+import sys
+sys.path.insert(0, '../../data')
+import data_utils
 
-from docopt import docopt
 from RCNN import Config, RCNN
 from torch.utils.data import DataLoader
 
@@ -34,7 +45,7 @@ def backprop(optimizer, logits, labels):
 
 	return loss
 
-def get_accuracy(logits, labels)
+def get_accuracy(logits, labels):
 
 	return torch.mean(torch.eq(torch.argmax(logits, dim = 1), labels))
 	
@@ -48,11 +59,11 @@ def train(args, config):
 	baseline_step = 0.1
 	baseline_momentum = 0.9
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-	print_every = 1 if !args['--print_every'] else args['--print_every']
+	print_every = args['--print_every'] 
 	num_epochs = args['--num_epochs']
-	save_every = 10 if !args['--save_every'] else args['--save_every']
-	save_path = baseline_model_path if !args['--save_path'] else args['--save_path']
-	load_path = None if !args['--load_path'] else args['--load_path']
+	save_every = args['--save_every'] 
+	save_path = baseline_model_path 
+	load_path = args['--load_path'] 
 
 	#Stores hyperparams for model
 	
@@ -62,7 +73,7 @@ def train(args, config):
 
 	optimizer = torch.optim.SGD(model.parameters(), lr= baseline_step, momentum = baseline_momentum)
 
-	train_data_path = args['--data_path'] else None
+	train_data_path = None if not args['--data_path'] else args['--data_path']
 	if train_data_path == None: 
 		raise Exception("Training data path not fed in.")
 
@@ -71,7 +82,8 @@ def train(args, config):
 
 	##############LOAD TRAIN DATA and initiate train
 
-	data_train = ...
+	data_train = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv')
+
 	dataloader_train = DataLoader(data_train, batch_size = config.batch_sz)
 
 	print("Finished loading training data from {}".format(train_data_path))
@@ -86,7 +98,7 @@ def train(args, config):
 
 	init_epoch = 0
 
-	if (load_path != None):  #If model is retrained from saved ckpt
+	if (load_path != 'None'):  #If model is retrained from saved ckpt
 		
 		checkpoint = torch.load(load_path)
 		model.load_state_dict(checkpoint['model_state_dict'])
@@ -129,15 +141,15 @@ def train(args, config):
 							save_path)
 				print ("Saved successfully to {}".format(save_path))
 
-		except KeyboardInterrupt:
-			print("Training interupted...")
-			print ("Saving model to {}".format(save_path))
-			torch.save({'epoch': epoch,
-						'model_state_dict': model.state_dict(), 
-						'optimizer_state_dict': optimizer.state_dict(), 
-						'loss': loss}, 
-						save_path)
-			print ("Saved successfully to {}".format(save_path))
+	except KeyboardInterrupt:
+		print("Training interupted...")
+		print ("Saving model to {}".format(save_path))
+		torch.save({'epoch': epoch,
+					'model_state_dict': model.state_dict(), 
+					'optimizer_state_dict': optimizer.state_dict(), 
+					'loss': loss}, 
+					save_path)
+		print ("Saved successfully to {}".format(save_path))
 			
 
 	print("Training completed.")
@@ -151,7 +163,7 @@ def test(args, config):
 
 	#Load saved model
 
-	test_data_path = args['--data_path'] else None
+	test_data_path = None if not args['--data_path'] else args['--data_path'] 
 	if test_data_path == None: 
 		raise Exception("Test data path not fed in.")
 
@@ -166,7 +178,7 @@ def test(args, config):
 	print("Finished loading training data from {}".format(train_data_path))
 
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-	load_path = baseline_model_path if !args['--load_path'] else args['--load_path']
+	load_path = baseline_model_path if not args['--load_path'] else args['--load_path']
 
 	model = RCNN(config)
 	model.to(device)
@@ -216,19 +228,20 @@ def test(args, config):
 def main():
 	args = docopt(__doc__)
 
-	config = Config(batch_sz = args['--batch_sz'], 
-					num_batches = args['--num_batches']) 
+	config = Config(batch_sz = args['--batch_sz'])
+
+	if args['--num_batches']: config.num_batches = args['--num_batches']
 
 	if args['train']:
 
-        train_losses, train_accs, loss, accuracy = train(args, config, baseline_model_path)
-        np.save(np.array(train_accs), 'train_accs.npy')
-        np.save(np.array(train_losses), 'train_losses.npy')
-        print("Final training loss: {}, Final Training Accuracy: {}".format(loss, accuracy))
+		train_losses, train_accs, loss, accuracy = train(args, config, baseline_model_path)
+		np.save(np.array(train_accs), 'train_accs.npy')
+		np.save(np.array(train_losses), 'train_losses.npy')
+		print("Final training loss: {}, Final Training Accuracy: {}".format(loss, accuracy))
 
-    else args['test']:
-    	loss, accuracy = test(args, config)
-        print("Test loss: {}", "Test accuracy: {}".format(loss, accuracy))
+	elif args['test']:
+		loss, accuracy = test(args, config)
+		print("Test loss: {}", "Test accuracy: {}".format(loss, accuracy))
 
 
 if __name__ == "__main__":

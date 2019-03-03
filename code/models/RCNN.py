@@ -95,4 +95,33 @@ class RCNN(nn.Module):
 		return output
 
 
+if __name__ == "__main__":
+	batch_sz = 128
+	m_word = 20
+	e_char = 10
+	kernel_sz = 5
+	out_channels = 12
+	num_iters = 50000
+
+	model = CNN(e_char, out_channels, m_word)
+
+	x = torch.randn(batch_sz, e_char, m_word)
+	y = torch.randn(batch_sz, out_channels)
+
+	criterion = torch.nn.MSELoss(reduction='sum')
+	optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
+
+	for t in range(num_iters):
+	    # Forward pass: Compute predicted y by passing x to the model
+	    y_pred = model.forward(x)
+	    #print("y_pred shape: {}".format(y_pred.size()))
+	    # Compute and print loss
+	    loss = criterion(y_pred, y)
+	    if t % 1000 == 0: print(t, loss.item())
+
+	    # Zero gradients, perform a backward pass, and update the weights.
+	    optimizer.zero_grad()
+	    loss.backward()
+	    optimizer.step()
+
 
