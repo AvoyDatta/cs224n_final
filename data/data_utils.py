@@ -1,5 +1,6 @@
 import csv
 import torch
+from torch.utils.data import Dataset
 import numpy as np
 import gensim
 from gensim.models import KeyedVectors
@@ -9,7 +10,30 @@ from gensim.scripts.glove2word2vec import glove2word2vec
 import nltk
 from collections import defaultdict
 from functools import partial
+import os 
+from tqdm import tqdm
+import time
 # nltk.download('punkt')
+
+class DJIA_Dataset(Dataset):
+	def __init__(self,path_technical_csv,path_title_csv):
+		"""
+		path_technical_csv: path to technical csv
+		path_title_csv: path to csv with titles of articles
+		"""
+		self.technical_data = loadTechnical(path_technical_csv)
+		self.targets,self.title_data = loadTitle(path_title_csv)
+		self.length = self.targets.shape[0]
+
+	def __len__(self):
+		return self.length
+	def __getitem__(self,index):
+		"""
+		index: index of element in dataset you want
+		returns: tuple( technical_data(5,7), title_data(25,50),target(1)  )
+		"""
+		return {"titles":self.technical_data[:,index,:],"tech_indicators" :self.title_data[index,:,:],"movement": self.targets[index]}
+
 
 def loadTechnical(input_csv_path,n=5,input_size=7):
 	"""
@@ -204,55 +228,80 @@ def loadTitle(input_csv_path):
 	#ToDo Only look up models if word2vec.csv doesn't exist 
 	# model = gensim.models.KeyedVectors.load_word2vec_format('./lexvec.pos.vectors', binary=True)
 	# model = gensim.models.KeyedVectors.load_word2vec_format('lexvec.enwiki+newscrawl.300d.W.pos.vectors', binary=True)
+
+	### LOAD PREVIOUSLY SAVED MODEL
+	model_path = 'glove_word2vec.model'
+	if not os.path.isfile(model_path):
+		glove_file = 'glove.6B.50d.txt'
+		tmp_file = get_tmpfile("test_word2vec.txt")
+		glove2word2vec(glove_file, tmp_file)
+		model = KeyedVectors.load_word2vec_format(tmp_file)
+		model.save("glove_word2vec.model")
+
+	model = KeyedVectors.load(model_path)
+	vocab = model.vocab.keys()
+
+	# print(len(vocab))
+	set_vocab = set(vocab)
+	# t1 = time.time()
+	# if "time" in set_vocab:
+	# 	# print("yeet")
+	# 	next
+	# t2 = time.time()
+	# print("lookin up whether a word exists in vocab takes: {} seconds \n".format(t2-t1))
 	
 	### LOAD MODEL FROM SCRATCH
 	# https://nlp.stanford.edu/projects/glove/ : glove.6b.zip
-	# glove_file = 'glove.6B.50d.txt'
-	# tmp_file = get_tmpfile("test_word2vec.txt")
+	
 
-	# _ = glove2word2vec(glove_file, tmp_file)
-
-	# model = KeyedVectors.load_word2vec_format(tmp_file)
-
-	# model.save("glove_word2vec.model")
-
-	### LOAD PREVIOUSLY SAVED MODEL
-	model = KeyedVectors.load('glove_word2vec.model')
-	vocab = model.vocab.keys()
+	
 
 	#convert titles to word2vec
 	word2vec_data = []
 
 	embed_size = 50 # 50 for glove.6B.50d. will be 300 for goog news
 
-	for i in range(len(data)):
-		headline_list = []
+	print("Loading titles...")
+	with tqdm(total=len(data)) as pbar: 
+		for i in range(len(data)):
+			headline_list = []
 
-		for headline in data[i][2:]:
-			word_vecs = np.concatenate(np.array([[model[word] for word in nltk.word_tokenize(headline) if word in vocab]]))
-			
-			# in case headline has no words that appear in model vocab. 
-			# happened in about 600 articles using glove embeddings,
-			# but should not be too common with Google News trained embeddings
-			if len(word_vecs) == 0:
-				word_vecs = np.zeros((1, 50))
+			for headline in data[i][2:]:
 
-			headline_vec = np.mean(word_vecs, axis=0) # [np.newaxis,:]
-			headline_list.append(headline_vec)
+				# t1 = time.time()
+				# a = [word for word in nltk.word_tokenize(headline) if word in set_vocab]
+				# t2 = time.time()
 
-		headline_list = np.stack(headline_list, axis=-1)
+				# print("lookin up whether each word in headline exists in vocab takes: {} seconds \n".format(t2-t1))
 
-		# pad if < 25 headlines
-		if headline_list.shape != (embed_size,25):
-			# print("oops")
-			# print(headline_list.shape)
-			_,m = headline_list.shape
-			n = 25
-			a = np.zeros((embed_size,25))
-			a[:,:m]= headline_list
-			headline_list = a 
-			# print('changed to: ',headline_list.shape)
-		word2vec_data.append(headline_list)
+				# t1 = time.time()
+				word_vecs = np.concatenate(np.array([[model[word] for word in nltk.word_tokenize(headline) if word in set_vocab]]))
+				# t2 = time.time()
+				# print("creating word vecs takes: {} seconds".format(t2-t1))
+				
+				# in case headline has no words that appear in model vocab. 
+				# happened in about 600 articles using glove embeddings,
+				# but should not be too common with Google News trained embeddings
+				if len(word_vecs) == 0:
+					word_vecs = np.zeros((1, embed_size))
+
+				headline_vec = np.mean(word_vecs, axis=0) # [np.newaxis,:]
+				headline_list.append(headline_vec)
+
+			headline_list = np.stack(headline_list, axis=-1)
+
+			# pad if < 25 headlines
+			if headline_list.shape != (embed_size,25):
+				# print("oops")
+				# print(headline_list.shape)
+				_,m = headline_list.shape
+				n = 25
+				a = np.zeros((embed_size,25))
+				a[:,:m]= headline_list
+				headline_list = a 
+				# print('changed to: ',headline_list.shape)
+			word2vec_data.append(headline_list)
+			pbar.update(1)
 
 	# #batch_size,300,25
 
@@ -266,11 +315,12 @@ def loadTitle(input_csv_path):
 
 	# print(new_tensor.shape)
 	# print(new_tensor)
+	print("Completed loading titles")
 	return (targets,new_tensor)
 
 
 # to test
 
-loadTitle('Combined_News_DJIA.csv')
+# loadTitle('Combined_News_DJIA.csv')
 
 
