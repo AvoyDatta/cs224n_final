@@ -7,7 +7,7 @@ baseline.py
 
 Usage:
 	baseline.py train --batch_sz=<int> --num_batches=<int> --print_every=<int> --save_every=<int> --num_epochs=<int>
-	baseline.py test --batch_sz=<int> [options]
+	baseline.py test --batch_sz=<int>
 
 Options:
 	--num_batches=<int>               Number of minibatches per epoch[default:1000]
@@ -26,10 +26,11 @@ from tqdm import tqdm
 import time
 import os
 import sys
+import torch.utils as utils
 # sys.path.append(os.path.join(os.getcwd(),'..\\..\\data'))
 # sys.path.append(os.path.join(os.getcwd(),'..\\..\\data\\glove.6B'))
-sys.path.append('../../data')
-sys.path.append('../../data/glove.6B')
+sys.path.append('../../data/')
+sys.path.append('../../data/glove.6B/')
 print(sys.path)
 
 import data_utils
@@ -51,7 +52,7 @@ def backprop(optimizer, logits, labels):
 
 def get_accuracy(logits, labels):
 
-	return torch.mean(torch.eq(torch.argmax(logits, dim = 1), labels))
+	return torch.mean(torch.eq(torch.argmax(logits, dim = 1), labels).float())
 	
 def train(args, config):
 	"""
@@ -63,10 +64,12 @@ def train(args, config):
 	baseline_step = 0.1
 	baseline_momentum = 0.9
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-	print_every = args['--print_every'] 
-	num_epochs = args['--num_epochs']
-	save_every = args['--save_every'] 
+	print_every = int(args['--print_every']) 
+	num_epochs = int(args['--num_epochs'])
+	save_every = int(args['--save_every']) 
 	save_path = baseline_model_path 
+	num_batches = int(args['--num_batches'])
+
 
 	#Stores hyperparams for model
 	
@@ -86,11 +89,11 @@ def train(args, config):
 	##############LOAD TRAIN DATA and initiate train
 
 	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv')
-	data_train = data[:1800]
+	data_train = utils.data.Subset(data, [i for i in range(1800)])
 
 	dataloader_train = DataLoader(data_train, batch_size = int(config.batch_sz))
 
-	print("Finished loading training data from {}".format(train_data_path))
+	#print("Finished loading training data from {}".format(train_data_path))
 
 
 	##Read in data from train_data_path
@@ -126,7 +129,7 @@ def train(args, config):
 					movement.to(device)
 
 					logits = model.forward(titles, tech_indicators)
-					loss = backprop(optimizer, logits, movement)
+					loss = model.backprop(optimizer, logits, movement)
 					train_ctr += 1
 					accuracy = get_accuracy(logits, movement) #Accuracy over entire mini-batch
 					
@@ -134,7 +137,7 @@ def train(args, config):
 					train_accs.append(accuracy)
 
 			if epoch % print_every == 0: 
-				print ("Epoch: {}, Training iter: {}, Time since start: {}, Loss: , Training Accuracy: {}".format(epoch, train_ctr, (time.time() - start), loss, accuracy))
+				print ("Epoch: {}, Training iter: {}, Time since start: {}, Loss: {}, Training Accuracy: {}".format(epoch, train_ctr, (time.time() - start), loss, accuracy))
 
 			if epoch % save_every == 0:
 				print ("Saving model to {}".format(save_path))
@@ -178,11 +181,11 @@ def test(args, config):
 
 	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv')
 
-	data_test = data[1800:]
+	data_test = utils.data.Subset(data, [i for i in range(1800, 1980)])
 
 	dataloader_test = DataLoader(data_test, batch_size = config.batch_sz)
 
-	print("Finished loading training data from {}".format(train_data_path))
+	#print("Finished loading training data from {}".format(train_data_path))
 
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	load_path = baseline_model_path 
@@ -195,9 +198,9 @@ def test(args, config):
 		print("Loading model from {}".format(load_path))
 		checkpoint = torch.load(load_path)
 		model.load_state_dict(checkpoint['model_state_dict'])
-		optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-		epoch = checkpoint['epoch']
-		loss = checkpoint['loss']
+		#optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+		#epoch = checkpoint['epoch']
+		#loss = checkpoint['loss']
 		print("Model successfully loaded from {}".format(load_path))
 
 	model.eval()
@@ -220,12 +223,16 @@ def test(args, config):
 			movement.to(device)
 
 			logits = model.forward(titles, tech_indicators)
-			loss = nn.NLLLoss(logits, movement, reduce = True, reduction = 'mean')
+			temp_criterion = nn.NLLLoss(reduce = True, reduction = 'mean')
+			loss = temp_criterion(logits, movement)
+
 			accuracy = get_accuracy(logits, movement) #Accuracy over entire mini-batch
 			
-			test_loss.append(loss)
-			test_accuracy.append(accuracy)
+			test_loss.append(loss.detach().numpy())
+
+			test_accuracy.append(accuracy.detach().numpy())
 			#Training step
+
 
 	test_loss, test_accuracy = np.mean(np.array(test_loss)), np.mean(np.array(test_accuracy))
 
@@ -242,8 +249,8 @@ def main():
 	if args['train']:
 
 		train_losses, train_accs, loss, accuracy = train(args, config)
-		np.save(np.array(train_accs), 'train_accs.npy')
-		np.save(np.array(train_losses), 'train_losses.npy')
+		np.save('train_accs.npy', np.array(train_accs))
+		np.save('train_losses.npy', np.array(train_losses))
 		print("Final training loss: {}, Final Training Accuracy: {}".format(loss, accuracy))
 
 	elif args['test']:
