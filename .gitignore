@@ -21,3 +21,8 @@ data/glove.6B/glove.6B.200d.txt
 data/glove.6B/glove.6B.300d.txt
 data/glove_word2vec.model
 data/glove_word2vec.model.vectors.npy
+code/models/glove_word2vec.model
+code/models/glove_word2vec.model.vectors.npy
+code/models/train_accs.npy
+code/models/train_losses.npy
+code/models/glove.6B.50d.txt

@@ -35,11 +35,11 @@ print(sys.path)
 
 import data_utils
 
-from RCNN import Config, RCNN
+from RCNN_nti import Config, RCNN_nti 
 from torch.utils.data import DataLoader
 
 
-baseline_model_path = "../../trained_models/baseline/baseline.pt"
+baseline_model_path = "../../trained_models/baseline/baseline_nti.pt"
 
 def backprop(optimizer, logits, labels):
 
@@ -74,7 +74,7 @@ def train(args, config):
 	#Stores hyperparams for model
 	
 
-	model = RCNN(config)
+	model = RCNN_nti(config)
 	model.to(device)
 
 	optimizer = torch.optim.SGD(model.parameters(), lr= baseline_step, momentum = baseline_momentum)
@@ -91,9 +91,7 @@ def train(args, config):
 	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv')
 	data_train = utils.data.Subset(data, [i for i in range(1800)])
 
-	print(len(data_train))
 	dataloader_train = DataLoader(data_train, batch_size = int(config.batch_sz))
-	print(len(dataloader_train))
 
 	#print("Finished loading training data from {}".format(train_data_path))
 
@@ -130,7 +128,7 @@ def train(args, config):
 					tech_indicators.to(device)
 					movement.to(device)
 
-					logits = model.forward(titles, tech_indicators)
+					logits = model.forward(titles)
 					loss = model.backprop(optimizer, logits, movement)
 					train_ctr += 1
 					accuracy = get_accuracy(logits, movement) #Accuracy over entire mini-batch
@@ -143,11 +141,11 @@ def train(args, config):
 
 			if epoch % save_every == 0:
 				print ("Saving model to {}".format(save_path))
-				# torch.save({'epoch': epoch,
-				# 			'model_state_dict': model.state_dict(), 
-				# 			'optimizer_state_dict': optimizer.state_dict(), 
-				# 			'loss': loss}, 
-				# 			save_path)
+				torch.save({'epoch': epoch,
+							'model_state_dict': model.state_dict(), 
+							'optimizer_state_dict': optimizer.state_dict(), 
+							'loss': loss}, 
+							save_path)
 				print ("Saved successfully to {}".format(save_path))
 
 	except KeyboardInterrupt:
@@ -192,7 +190,7 @@ def test(args, config):
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	load_path = baseline_model_path 
 
-	model = RCNN(config)
+	model = RCNN_nti(config)
 	model.to(device)
 
 	if (load_path != None):  #If model is retrained from saved ckpt
@@ -224,7 +222,7 @@ def test(args, config):
 			tech_indicators.to(device)
 			movement.to(device)
 
-			logits = model.forward(titles, tech_indicators)
+			logits = model.forward(titles)
 			temp_criterion = nn.NLLLoss(reduce = True, reduction = 'mean')
 			loss = temp_criterion(logits, movement)
 

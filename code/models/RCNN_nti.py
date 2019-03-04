@@ -4,7 +4,7 @@ import torch.nn as nn
 class Config(): 
 	def __init__(self, 
 				num_titles = 25, 
-				title_dim = 300, 
+				title_dim = 50, 
 				n_tech_indicators = 7,
 				n_hidden_LSTM_titles = 128, 
 				n_hidden_LSTM_tech = 50, 
@@ -36,14 +36,14 @@ class Config():
 """
 Currently skeleton code, fill with actual models as desired
 """
-class RCNN(nn.Module):
+class RCNN_nti(nn.Module):
 	def __init__(self, config):
 		''' 
 		input_dim: Dimensionality of input corpus
 		hidden_dim: Hidden layer dimensionality
 		output_dim: Dimensionality of output of model (should be scalar)
 		'''
-		super(RCNN,self).__init__()
+		super(RCNN_nti,self).__init__()
 		self.config = config
 
 		print(config.__dict__.values())
@@ -55,10 +55,10 @@ class RCNN(nn.Module):
 		self.lstm2 = nn.LSTM(config.input_dim_2, config.n_hidden_LSTM_tech)
 
 		#Linearly project final hidden states from LSTM to sigmoid output
-		self.map_to_out = nn.Linear(2 * (config.n_hidden_LSTM_titles + config.n_hidden_LSTM_tech), 
+		self.map_to_out = nn.Linear(2*config.n_hidden_LSTM_titles, 
 									config.n_outputs)
 
-		self.softmax = nn.Softmax() #MIGHT NEED TO EDIT DIM LATER
+		self.softmax = nn.LogSoftmax() #MIGHT NEED TO EDIT DIM LATER
 		self.criterion = nn.NLLLoss(reduction = True, reduce = 'mean')
 		
 	"""
@@ -68,7 +68,7 @@ class RCNN(nn.Module):
 		tech_indicators: Batched tensor of tech indicators. Each batch element has indicators (dim 7) for a window of size n = 5. Expected dims: (seq_len, batch, input_dim)
 	"""
 
-	def forward(self, titles, tech_indicators):
+	def forward(self, titles):
 		
 		#Input: (batch_sz, sent_embed_sz, num_titles), i.e. (batch, m, L) in paper
 		# print(titles.shape)
@@ -89,11 +89,11 @@ class RCNN(nn.Module):
 		
 		# print(last_hidden_1.shape)
 		# print(tech_indicators.shape)
-		_, (last_hidden_2, last_cell_2) = self.lstm2(tech_indicators.permute(1,0,2))
-		last_hidden_2, last_cell_2 = last_hidden_2.squeeze(0), last_cell_2.squeeze(0) # Both are now (batch, hidden_size)
+		# _, (last_hidden_2, last_cell_2) = self.lstm2(tech_indicators.permute(1,0,2))
+		# last_hidden_2, last_cell_2 = last_hidden_2.squeeze(0), last_cell_2.squeeze(0) # Both are now (batch, hidden_size)
 		
 		# print(last_hidden_2.shape)
-		concatenated = torch.cat((last_hidden_1, last_cell_1, last_hidden_2, last_cell_2), 1) #(batch, 2*h_dim_1 + 2*h_dim_2)
+		concatenated = torch.cat((last_hidden_1, last_cell_1), 1) #(batch, 2*h_dim_1 + 2*h_dim_2)
 
 		output = self.softmax(self.map_to_out(concatenated)) #(batch, 2)
 		# print(output.shape)
@@ -111,9 +111,9 @@ class RCNN(nn.Module):
 if __name__ == "__main__":
 	config = Config()
 
-	model = RCNN(config)
+	model = RCNN_nti(config)
 	# batch_sz, sent_embed_sz, num_titles)
-	tech_indicators = torch.randn(config.batch_sz, 5,7)
+	# tech_indicators = torch.randn(config.batch_sz, 5,7)
 	titles = torch.randn(config.batch_sz,config.title_dim,config.num_titles)
 
 	y =torch.randint(0,2,(config.batch_sz,1))
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 	num_iters=10000
 	for t in range(num_iters):
 	    # Forward pass: Compute predicted y by passing x to the model
-	    y_pred = model.forward(titles,tech_indicators)
+	    y_pred = model.forward(titles)
 	    # print(y_pred)
 	    # y_pred = torch.randn(config.batch_sz,1)
 	    #print("y_pred shape: {}".format(y_pred.size()))
