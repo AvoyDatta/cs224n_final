@@ -236,13 +236,13 @@ def loadTitle(input_csv_path):
 	# model = gensim.models.KeyedVectors.load_word2vec_format('lexvec.enwiki+newscrawl.300d.W.pos.vectors', binary=True)
 
 	### LOAD PREVIOUSLY SAVED MODEL
-	model_path = 'glove_word2vec.model'
+	model_path = 'glove_word2vec300.model'
 	if not os.path.isfile(model_path):
-		glove_file = 'glove.6B.50d.txt'
+		glove_file = 'glove.6B.300d.txt'
 		tmp_file = get_tmpfile("test_word2vec.txt")
 		glove2word2vec(glove_file, tmp_file)
 		model = KeyedVectors.load_word2vec_format(tmp_file)
-		model.save("glove_word2vec.model")
+		model.save("glove_word2vec300.model")
 
 	model = KeyedVectors.load(model_path)
 	vocab = model.vocab.keys()
@@ -265,7 +265,7 @@ def loadTitle(input_csv_path):
 	#convert titles to word2vec
 	word2vec_data = []
 
-	embed_size = 50 # 50 for glove.6B.50d. will be 300 for goog news
+	embed_size = 300 # 50 for glove.6B.50d. will be 300 for goog news
 
 	print("Loading titles...")
 	with tqdm(total=len(data)) as pbar: 
@@ -317,7 +317,7 @@ def loadTitle(input_csv_path):
 	new_tensor = new_tensor[5:,:,:]
 	targets = torch.Tensor(targets[5:])
 
-	# print(new_tensor.shape)
+	print(new_tensor.shape)
 	# print(new_tensor)
 	print("Completed loading titles")
 	return (targets,new_tensor)
