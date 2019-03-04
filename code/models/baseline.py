@@ -35,11 +35,11 @@ print(sys.path)
 
 import data_utils
 
-from RCNN_nti import Config, RCNN_nti 
+from RCNN import Config, RCNN
 from torch.utils.data import DataLoader
 
 
-baseline_model_path = "../../trained_models/baseline/baseline_nti.pt"
+baseline_model_path = "../../trained_models/baseline/baseline.pt"
 
 def backprop(optimizer, logits, labels):
 
@@ -74,7 +74,7 @@ def train(args, config):
 	#Stores hyperparams for model
 	
 
-	model = RCNN_nti(config)
+	model = RCNN(config)
 	model.to(device)
 
 	optimizer = torch.optim.SGD(model.parameters(), lr= baseline_step, momentum = baseline_momentum)
@@ -190,7 +190,7 @@ def test(args, config):
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	load_path = baseline_model_path 
 
-	model = RCNN_nti(config)
+	model = RCNN(config)
 	model.to(device)
 
 	if (load_path != None):  #If model is retrained from saved ckpt
