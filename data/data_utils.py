@@ -13,7 +13,7 @@ from functools import partial
 import os 
 from tqdm import tqdm
 import time
-# nltk.download('punkt')
+#nltk.download('punkt')
 
 class DJIA_Dataset(Dataset):
 	def __init__(self,path_technical_csv,path_title_csv):
@@ -32,7 +32,7 @@ class DJIA_Dataset(Dataset):
 		index: index of element in dataset you want
 		returns: tuple( technical_data(5,7), title_data(25,50),target(1)  )
 		"""
-		return {"titles":self.technical_data[:,index,:],"tech_indicators" :self.title_data[index,:,:],"movement": self.targets[index]}
+		return {"titles":self.title_data[index,:,:].permute(1, 0),"tech_indicators" :self.technical_data[:,index,:],"movement": self.targets[index].type(torch.LongTensor)}
 
 
 def loadTechnical(input_csv_path,n=5,input_size=7):
@@ -232,7 +232,7 @@ def loadTitle(input_csv_path):
 	### LOAD PREVIOUSLY SAVED MODEL
 	model_path = 'glove_word2vec.model'
 	if not os.path.isfile(model_path):
-		glove_file = 'glove.6B.50d.txt'
+		glove_file = '../../data/glove.6B.50d.txt'
 		tmp_file = get_tmpfile("test_word2vec.txt")
 		glove2word2vec(glove_file, tmp_file)
 		model = KeyedVectors.load_word2vec_format(tmp_file)

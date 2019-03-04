@@ -91,7 +91,9 @@ def train(args, config):
 	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv')
 	data_train = utils.data.Subset(data, [i for i in range(1800)])
 
+	print(len(data_train))
 	dataloader_train = DataLoader(data_train, batch_size = int(config.batch_sz))
+	print(len(dataloader_train))
 
 	#print("Finished loading training data from {}".format(train_data_path))
 
@@ -141,11 +143,11 @@ def train(args, config):
 
 			if epoch % save_every == 0:
 				print ("Saving model to {}".format(save_path))
-				torch.save({'epoch': epoch,
-							'model_state_dict': model.state_dict(), 
-							'optimizer_state_dict': optimizer.state_dict(), 
-							'loss': loss}, 
-							save_path)
+				# torch.save({'epoch': epoch,
+				# 			'model_state_dict': model.state_dict(), 
+				# 			'optimizer_state_dict': optimizer.state_dict(), 
+				# 			'loss': loss}, 
+				# 			save_path)
 				print ("Saved successfully to {}".format(save_path))
 
 	except KeyboardInterrupt:
