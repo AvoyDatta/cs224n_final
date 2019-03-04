@@ -208,11 +208,13 @@ def loadTitle(input_csv_path):
 	input: input_csv_path
 	output: Tuple(Tensor of size (batch_size,channels=num_titles,seq_len=300),targets)
 	"""
+
 	with open(input_csv_path,'r') as csvfile:
 		reader = csv.reader(csvfile,delimiter=",")
 		data = []
 		for row in reader:
-			data.append(row)
+			data.append([s.lower() for s in row])
+
 	keys = data[0]
 	# sanitize input
 	for i in range(len(data)): 
@@ -264,7 +266,7 @@ def loadTitle(input_csv_path):
 	word2vec_data = []
 
 	embed_size = 50 # 50 for glove.6B.50d. will be 300 for goog news
-
+	
 	print("Loading titles...")
 	with tqdm(total=len(data)) as pbar: 
 		for i in range(len(data)):
@@ -288,6 +290,7 @@ def loadTitle(input_csv_path):
 				# but should not be too common with Google News trained embeddings
 				if len(word_vecs) == 0:
 					word_vecs = np.zeros((1, embed_size))
+					count += 1
 
 				headline_vec = np.mean(word_vecs, axis=0) # [np.newaxis,:]
 				headline_list.append(headline_vec)
@@ -325,6 +328,6 @@ def loadTitle(input_csv_path):
 
 # to test
 
-# loadTitle('Combined_News_DJIA.csv')
+loadTitle('Combined_News_DJIA.csv')
 
 
