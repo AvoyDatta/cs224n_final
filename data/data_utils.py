@@ -328,6 +328,6 @@ def loadTitle(input_csv_path):
 
 # to test
 
-loadTitle('Combined_News_DJIA.csv')
+#loadTitle('Combined_News_DJIA.csv')
 
 
