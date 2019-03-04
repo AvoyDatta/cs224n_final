@@ -116,7 +116,7 @@ def train(args, config):
 	model.train()
 
 	start = time.time()
-
+	print("Model parameters: {}".format(model.config.__dict__))
 	try: 
 		for epoch in range(init_epoch, num_epochs):
 

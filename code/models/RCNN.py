@@ -4,7 +4,7 @@ import torch.nn as nn
 class Config(): 
 	def __init__(self, 
 				num_titles = 25, 
-				title_dim = 50, 
+				title_dim = 300, 
 				n_tech_indicators = 7,
 				n_hidden_LSTM_titles = 128, 
 				n_hidden_LSTM_tech = 50, 
