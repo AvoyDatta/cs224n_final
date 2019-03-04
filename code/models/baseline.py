@@ -110,14 +110,15 @@ def train(args, config):
 	# 	checkpoint = torch.load(load_path)
 	# 	model.load_state_dict(checkpoint['model_state_dict'])
 	# 	optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-	# 	epoch = checkpoint['epoch']
+	# 	init_epoch = checkpoint['epoch']
 	# 	loss = checkpoint['loss']
 
 	model.train()
 
+	start = time.time()
+
 	try: 
 		for epoch in range(init_epoch, num_epochs):
-			start = time.time()
 
 			#INITIATE dataloader_train
 			with tqdm(total = num_batches * config.batch_sz) as pbar:
@@ -128,7 +129,7 @@ def train(args, config):
 					tech_indicators.to(device)
 					movement.to(device)
 
-					logits = model.forward(titles)
+					logits = model.forward(titles, tech_indicators)
 					loss = model.backprop(optimizer, logits, movement)
 					train_ctr += 1
 					accuracy = get_accuracy(logits, movement) #Accuracy over entire mini-batch
@@ -222,7 +223,7 @@ def test(args, config):
 			tech_indicators.to(device)
 			movement.to(device)
 
-			logits = model.forward(titles)
+			logits = model.forward(titles, tech_indicators)
 			temp_criterion = nn.NLLLoss(reduce = True, reduction = 'mean')
 			loss = temp_criterion(logits, movement)
 
@@ -255,7 +256,7 @@ def main():
 
 	elif args['test']:
 		loss, accuracy = test(args, config)
-		print("Test loss: {}", "Test accuracy: {}".format(loss, accuracy))
+		print("Test loss: {}, Test accuracy: {}".format(loss, accuracy))
 
 
 if __name__ == "__main__":

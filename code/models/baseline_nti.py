@@ -225,16 +225,17 @@ def test(args, config):
 			logits = model.forward(titles)
 			temp_criterion = nn.NLLLoss(reduce = True, reduction = 'mean')
 			loss = temp_criterion(logits, movement)
-
 			accuracy = get_accuracy(logits, movement) #Accuracy over entire mini-batch
-			
+			print(loss, accuracy)
+
 			test_loss.append(loss.detach().numpy())
 
 			test_accuracy.append(accuracy.detach().numpy())
 			#Training step
 
-
-	test_loss, test_accuracy = np.mean(np.array(test_loss)), np.mean(np.array(test_accuracy))
+	print(test_loss, test_accuracy)
+	test_loss = np.mean(np.array(test_loss))
+	test_accuracy = np.mean(np.array(test_accuracy))
 
 	return (test_loss, test_accuracy)
 
@@ -255,7 +256,7 @@ def main():
 
 	elif args['test']:
 		loss, accuracy = test(args, config)
-		print("Test loss: {}", "Test accuracy: {}".format(loss, accuracy))
+		print("Test loss: {}, Test accuracy: {}".format(loss, accuracy))
 
 
 if __name__ == "__main__":
