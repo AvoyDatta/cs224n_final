@@ -180,7 +180,7 @@ def test(args, config):
 
 	##############LOAD TEST DATA and initiate dataloader as dataloader_test
 
-	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv')
+	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
 
 	data_test = utils.data.Subset(data, [i for i in range(1800, 1980)])
 

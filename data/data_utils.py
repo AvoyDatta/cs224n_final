@@ -13,16 +13,17 @@ from functools import partial
 import os 
 from tqdm import tqdm
 import time
+import random
 # nltk.download('punkt')
 
 class DJIA_Dataset(Dataset):
-	def __init__(self,path_technical_csv,path_title_csv):
+	def __init__(self,path_technical_csv,path_title_csv,randomize_sz=12):
 		"""
 		path_technical_csv: path to technical csv
 		path_title_csv: path to csv with titles of articles
 		"""
 		self.technical_data = loadTechnical(path_technical_csv)
-		self.targets,self.title_data = loadTitle(path_title_csv)
+		self.targets,self.title_data = loadTitle(path_title_csv,randomize_sz=randomize_sz)
 		self.length = self.targets.shape[0]
 
 	def __len__(self):
@@ -203,12 +204,14 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 		# print(new_tensor.shape)
 		return new_tensor
 
-def loadTitle(input_csv_path):
+def loadTitle(input_csv_path,randomize_sz=None):
 	"""
 	input: input_csv_path
+	input: randomize_sz: choose the number of titles to randomly choose from to incorporate into titles for a particular day
 	output: Tuple(Tensor of size (batch_size,channels=num_titles,seq_len=300),targets)
 	"""
-
+	if randomize_sz is not None:
+		print("randomly choosing {} titles per day".format(randomize_sz))
 	with open(input_csv_path,'r') as csvfile:
 		reader = csv.reader(csvfile,delimiter=",")
 		data = []
@@ -271,8 +274,17 @@ def loadTitle(input_csv_path):
 	with tqdm(total=len(data)) as pbar: 
 		for i in range(len(data)):
 			headline_list = []
+			data_row = data[i][2:]
 
-			for headline in data[i][2:]:
+			#title choice randomization
+			if randomize_sz is not None:
+				random.shuffle(data_row)
+				aux = []
+				for i in range(randomize_sz):
+					aux.append(data_row[i])
+				data_row = aux
+
+			for headline in data_row:
 
 				# t1 = time.time()
 				# a = [word for word in nltk.word_tokenize(headline) if word in set_vocab]

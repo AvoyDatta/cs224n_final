@@ -26,3 +26,9 @@ code/models/glove_word2vec.model.vectors.npy
 code/models/train_accs.npy
 code/models/train_losses.npy
 code/models/glove.6B.50d.txt
+code/models/glove.6B.300d.txt
+code/models/glove_word2vec300.model
+code/models/glove_word2vec300.model.vectors.npy
+trained_models/baseline/baseline.pt
+trained_models/baseline/baseline_nti.pt
+*.txt
