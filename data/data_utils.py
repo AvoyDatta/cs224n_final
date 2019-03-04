@@ -266,7 +266,7 @@ def loadTitle(input_csv_path):
 	word2vec_data = []
 
 	embed_size = 50 # 50 for glove.6B.50d. will be 300 for goog news
-	
+
 	print("Loading titles...")
 	with tqdm(total=len(data)) as pbar: 
 		for i in range(len(data)):
@@ -285,12 +285,9 @@ def loadTitle(input_csv_path):
 				# t2 = time.time()
 				# print("creating word vecs takes: {} seconds".format(t2-t1))
 				
-				# in case headline has no words that appear in model vocab. 
-				# happened in about 600 articles using glove embeddings,
-				# but should not be too common with Google News trained embeddings
+				# in rare case that headline has no words that appear in model vocab. 
 				if len(word_vecs) == 0:
 					word_vecs = np.zeros((1, embed_size))
-					count += 1
 
 				headline_vec = np.mean(word_vecs, axis=0) # [np.newaxis,:]
 				headline_list.append(headline_vec)
@@ -328,6 +325,6 @@ def loadTitle(input_csv_path):
 
 # to test
 
-loadTitle('Combined_News_DJIA.csv')
+# loadTitle('Combined_News_DJIA.csv')
 
 
