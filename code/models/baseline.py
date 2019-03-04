@@ -121,7 +121,7 @@ def train(args, config):
 		for epoch in range(init_epoch, num_epochs):
 
 			#INITIATE dataloader_train
-			with tqdm(total = num_batches * config.batch_sz) as pbar:
+			with tqdm(total = len(dataloader_train)) as pbar:
 				for index, sample in enumerate(dataloader_train):
 
 					titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
