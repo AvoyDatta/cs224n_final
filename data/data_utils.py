@@ -280,8 +280,8 @@ def loadTitle(input_csv_path,randomize_sz=None):
 			if randomize_sz is not None:
 				random.shuffle(data_row)
 				aux = []
-				for i in range(randomize_sz):
-					aux.append(data_row[i])
+				for random_sample in range(randomize_sz):
+					aux.append(data_row[random_sample])
 				data_row = aux
 
 			for headline in data_row:
