@@ -281,6 +281,7 @@ def loadTitle(input_csv_path,randomize_sz=None):
 				random.shuffle(data_row)
 				aux = []
 				for random_sample in range(randomize_sz):
+					if random_sample >= len(data_row): break
 					aux.append(data_row[random_sample])
 				data_row = aux
 
@@ -329,7 +330,7 @@ def loadTitle(input_csv_path,randomize_sz=None):
 	new_tensor = new_tensor[5:,:,:]
 	targets = torch.Tensor(targets[5:])
 
-	print(new_tensor.shape)
+	# print(new_tensor.shape)
 	# print(new_tensor)
 	print("Completed loading titles")
 	return (targets,new_tensor)
