@@ -88,10 +88,14 @@ def train(args, config):
 
 	##############LOAD TRAIN DATA and initiate train
 
-	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv')
-	data_train = utils.data.Subset(data, [i for i in range(1800)])
+	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=12)
+	data_train = utils.data.Subset(data, [i for i in range(1600)])
+
+	dataset_val = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
+	data_val = utils.data.Subset(dataset_val,[i for i in range(1601,1800)])
 
 	dataloader_train = DataLoader(data_train, batch_size = int(config.batch_sz))
+	dataloader_val = DataLoader(data_val,batch_size=int(config.batch_sz))
 
 	#print("Finished loading training data from {}".format(train_data_path))
 
@@ -101,6 +105,8 @@ def train(args, config):
 
 	train_accs = []
 	train_losses = []
+	val_accs = []
+	val_losses = []
 	train_ctr = 0
 
 	init_epoch = 0
@@ -113,6 +119,7 @@ def train(args, config):
 	# 	init_epoch = checkpoint['epoch']
 	# 	loss = checkpoint['loss']
 
+	best_val_acc = 0
 	model.train()
 
 	start = time.time()
@@ -124,6 +131,8 @@ def train(args, config):
 			with tqdm(total = len(dataloader_train)) as pbar:
 				for index, sample in enumerate(dataloader_train):
 
+					model.train()
+
 					titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
 					titles.to(device)
 					tech_indicators.to(device)
@@ -133,14 +142,43 @@ def train(args, config):
 					loss = model.backprop(optimizer, logits, movement)
 					train_ctr += 1
 					accuracy = get_accuracy(logits, movement) #Accuracy over entire mini-batch
+
+					#run on validation
+					avg_val_accuracy = []
+					avg_val_loss = []
+					model.eval()
+					with torch.no_grad():
+						for index,sample in enumerate(dataloader_val):
+							titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
+							logits = model.forward(titles,tech_indicators)
+
+							titles.to(device)
+							tech_indicators.to(device)
+							movement.to(device)
+
+							loss_fn = nn.NLLLoss(reduce = True, reduction = 'mean')
+							loss_val = loss_fn(logits, movement)
+							accuracy = get_accuracy(logits,movement)
+							avg_val_accuracy.append(accuracy.numpy())
+							avg_val_loss.append(loss_val.numpy())
+
+					avg_val_accuracy = np.mean(avg_val_accuracy)
+					avg_val_loss = np.mean(avg_val_loss)						
+					val_accs.append(avg_val_accuracy)
+					val_losses.append(avg_val_loss)
+
+
 					
 					train_losses.append(loss)
 					train_accs.append(accuracy)
 
 			if epoch % print_every == 0: 
 				print ("Epoch: {}, Training iter: {}, Time since start: {}, Loss: {}, Training Accuracy: {}".format(epoch, train_ctr, (time.time() - start), loss, accuracy))
+				print ("Epoch: {}, Avg Val Loss: {},Avg Val Accuracy: {}".format(epoch, avg_val_loss, avg_val_accuracy))
 
-			if epoch % save_every == 0:
+			if epoch % save_every == 0 and best_val_acc < avg_val_accuracy:
+				best_val_acc = avg_val_accuracy
+				print("new best Avg Val Accuracy: {}".format(best_val_acc))
 				print ("Saving model to {}".format(save_path))
 				torch.save({'epoch': epoch,
 							'model_state_dict': model.state_dict(), 
@@ -162,7 +200,7 @@ def train(args, config):
 
 	print("Training completed.")
 
-	return (train_losses, train_accs, loss, accuracy) 
+	return (train_losses, train_accs, loss,val_losses,val_accs, best_val_acc) 
 
 def test(args, config):
 	#Get test data & parse
@@ -180,9 +218,9 @@ def test(args, config):
 
 	##############LOAD TEST DATA and initiate dataloader as dataloader_test
 
-	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv')
+	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
 
-	data_test = utils.data.Subset(data, [i for i in range(1800, 1980)])
+	data_test = utils.data.Subset(data, [i for i in range(1801, 1980)])
 
 	dataloader_test = DataLoader(data_test, batch_size = config.batch_sz)
 
@@ -249,10 +287,12 @@ def main():
 
 	if args['train']:
 
-		train_losses, train_accs, loss, accuracy = train(args, config)
+		train_losses, train_accs, loss,val_losses,val_accs, accuracy = train(args, config)
 		np.save('train_accs.npy', np.array(train_accs))
 		np.save('train_losses.npy', np.array(train_losses))
-		print("Final training loss: {}, Final Training Accuracy: {}".format(loss, accuracy))
+		np.save('val_accs.npy', np.array(val_accs))
+		np.save('val_losses.npy', np.array(val_losses))
+		print("Final training loss: {}, Best Validation Accuracy: {}".format(loss, accuracy))
 
 	elif args['test']:
 		loss, accuracy = test(args, config)
