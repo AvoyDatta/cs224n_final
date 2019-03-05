@@ -1,0 +1,17 @@
+
+Test_loss: 0.696755 , Test Accuracy: 0.491524
+Test_loss: 0.775075 , Test Accuracy: 0.500613
+Test_loss: 0.771103 , Test Accuracy: 0.473243
+Test_loss: 0.744786 , Test Accuracy: 0.542382
+Test_loss: 0.74556 , Test Accuracy: 0.478554
+Test_loss: 0.744827 , Test Accuracy: 0.503268
+Test_loss: 0.733774 , Test Accuracy: 0.513685
+Test_loss: 0.804366 , Test Accuracy: 0.524101
+Test_loss: 0.737098 , Test Accuracy: 0.473346
+Test_loss: 0.74991 , Test Accuracy: 0.477226
+Test_loss: 0.73283 , Test Accuracy: 0.520221
+Test_loss: 0.729332 , Test Accuracy: 0.491524
+Test_loss: 0.704611 , Test Accuracy: 0.488971
+Test_loss: 0.704611 , Test Accuracy: 0.488971
+Test_loss: 0.704611 , Test Accuracy: 0.488971
+Test_loss: 0.704611 , Test Accuracy: 0.488971

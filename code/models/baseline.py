@@ -6,7 +6,7 @@ Baseline
 baseline.py
 
 Usage:
-	baseline.py train --batch_sz=<int> --num_batches=<int> --print_every=<int> --save_every=<int> --num_epochs=<int>
+	baseline.py train --batch_sz=<int> --num_batches=<int> --print_every=<int> --save_every=<int> --num_epochs=<int> --randomize_sz=<int>
 	baseline.py test --batch_sz=<int>
 
 Options:
@@ -16,6 +16,7 @@ Options:
 	--data_path=<file>                Path to data
 	--num_epochs=<int>                Number of epochs to train for
 	--batch_sz=<int>                  Batch size [default: 128]
+	--randomize_sz=<int>			  Number of randomized titles to choose per day
 """
 from docopt import docopt
 
@@ -88,7 +89,8 @@ def train(args, config):
 
 	##############LOAD TRAIN DATA and initiate train
 
-	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=12)
+	randomize_sz = None if int(args['--randomize_sz']) == -1 else int(args['--randomize_sz'])
+	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=randomize_sz)
 	data_train = utils.data.Subset(data, [i for i in range(1600)])
 
 	dataset_val = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
@@ -125,7 +127,7 @@ def train(args, config):
 	start = time.time()
 	print("Model parameters: {}".format(model.config.__dict__))
 	try: 
-		for epoch in range(init_epoch, num_epochs):
+		for epoch in range(1, num_epochs + 1):
 
 			#INITIATE dataloader_train
 			with tqdm(total = len(dataloader_train)) as pbar:
@@ -274,6 +276,11 @@ def test(args, config):
 
 
 	test_loss, test_accuracy = np.mean(np.array(test_loss)), np.mean(np.array(test_accuracy))
+
+	str_to_save = "Test_loss: " + str(test_loss) + " , Test Accuracy: " + str(test_accuracy)
+
+	with open("test_results_randomize_sz.txt", 'a') as test_writer:
+		test_writer.write(str_to_save + "\n")
 
 	return (test_loss, test_accuracy)
 
