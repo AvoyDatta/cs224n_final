@@ -58,7 +58,7 @@ class RCNN(nn.Module):
 		self.map_to_out = nn.Linear(2 * (config.n_hidden_LSTM_titles + config.n_hidden_LSTM_tech), 
 									config.n_outputs)
 
-		self.softmax = nn.LogSoftmax() #MIGHT NEED TO EDIT DIM LATER
+		self.softmax = nn.LogSoftmax(dim=1) #MIGHT NEED TO EDIT DIM LATER
 		self.criterion = nn.NLLLoss(reduction = True, reduce = 'mean')
 		
 	"""
