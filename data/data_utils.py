@@ -8,6 +8,7 @@ from gensim.test.utils import datapath
 from gensim.test.utils import datapath, get_tmpfile
 from gensim.scripts.glove2word2vec import glove2word2vec
 import nltk
+from nltk.corpus import stopwords
 from collections import defaultdict
 from functools import partial
 import os 
@@ -270,6 +271,8 @@ def loadTitle(input_csv_path,randomize_sz=None):
 
 	embed_size = 300 # 50 for glove.6B.50d. will be 300 for goog news
 
+	stop_words = set(stopwords.words('english'))
+
 	print("Loading titles...")
 	with tqdm(total=len(data)) as pbar: 
 		for i in range(len(data)):
@@ -294,7 +297,7 @@ def loadTitle(input_csv_path,randomize_sz=None):
 				# print("lookin up whether each word in headline exists in vocab takes: {} seconds \n".format(t2-t1))
 
 				# t1 = time.time()
-				word_vecs = np.concatenate(np.array([[model[word] for word in nltk.word_tokenize(headline) if word in set_vocab]]))
+				word_vecs = np.concatenate(np.array([[model[word] for word in nltk.word_tokenize(headline) if word in set_vocab and word not in stop_words]]))
 				# t2 = time.time()
 				# print("creating word vecs takes: {} seconds".format(t2-t1))
 				
@@ -338,7 +341,5 @@ def loadTitle(input_csv_path,randomize_sz=None):
 
 # to test
 
-#loadTitle('Combined_News_DJIA.csv')
 # loadTitle('Combined_News_DJIA.csv')
-
 
