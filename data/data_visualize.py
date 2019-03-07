@@ -22,16 +22,18 @@ def plot_tech_indicators(days_to_plot = 100, n_days = 1):
 	print(reshaped_indicators.shape)
 
 
-	plt.title("Technical indicators for the first {} days".format(days_to_plot))
 	days = np.arange(1, 101, 1)
-	labels = ["Stoch_K", "Stoch_D", "Momentum", "ROC", "WillR", "AD", "Disp"]
+	labels = ["Stoch_K", "Stoch_D", "Momentum", "ROC", "Will's%R", "A/D", "Disp5"]
 
+	
+	plt.title("Technical indicators for the first {} days".format(days_to_plot))
 	for indicator in range(reshaped_indicators.shape[1]):
 
 		plt.subplot(7, 1, indicator + 1)
 		plt.plot(days, reshaped_indicators[:days_to_plot, indicator], '.-')
 		plt.ylabel(labels[indicator])
 
+	plt.xlabel("Number of days after 8th August 2008.")
 	plt.show()
 	# plt.subplot(7, 1, 2)
 	# plt.plot(x2, y2, '.-')
