@@ -300,7 +300,6 @@ def main():
 	args = docopt(__doc__)
 
 	config = Config_concat(batch_sz = int(args['--batch_sz']))
->>>>>>> d5e47a8401130819a1942315f100a4df8803d2fe
 
 	if args['--num_batches']: config.num_batches = int(args['--num_batches'])
 
