@@ -41,6 +41,7 @@ class DJIA_Dataset(Dataset):
 				"movement": self.targets[index].type(torch.LongTensor)}
 
 
+
 def loadTechnical(input_csv_path,n=5,input_size=7):
 	"""
 	input_csv_path: path to csv
@@ -74,18 +75,18 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 			C_t = data_dict['Close'][t]
 			HH_n = 0
 			LL_n = 0
-			# if t < 1: 
-			# 	HH_n = data_dict['High'][t]
-			# 	LL_n = data_dict['Low'][t]
-			# elif t < n: 
-			# 	assert len(data_dict['High'][:t]) < n
-			# 	HH_n = max(data_dict['High'][:t])
-			# 	LL_n = max(data_dict['Low'][:t])
-			# else: 
-			length = len(data_dict['High'][t-n:t])
-			assert length == n
-			HH_n = max(data_dict['High'][t-n:t])
-			LL_n = max(data_dict['Low'][t-n:t])
+			if t < 1: 
+				HH_n = data_dict['High'][t]
+				LL_n = data_dict['Low'][t]
+			elif t < n: 
+				assert len(data_dict['High'][:t]) < n
+				HH_n = max(data_dict['High'][:t])
+				LL_n = max(data_dict['Low'][:t])
+			else: 
+				length = len(data_dict['High'][t-n:t])
+				assert length == n
+				HH_n = max(data_dict['High'][t-n:t])
+				LL_n = max(data_dict['Low'][t-n:t])
 			new_timeseq.append((C_t -LL_n)/(HH_n-LL_n))
 		data_dict['Stoch_K'] = new_timeseq
 		assert len(data_dict['Stoch_K'])==data_length
@@ -94,14 +95,14 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 		new_timeseq = []
 		for t in range(data_length):
 			sum_val = 0
-			# if t < 1: 
-			# 	sum_val  = data_dict['Stoch_K'][t]
-			# elif t < n: 
-			# 	sum_val = sum(data_dict['Stoch_K'][:t])
-			# else: 
-			sum_val= sum(data_dict['Stoch_K'][t-(n-1):t+1])
-			length = len(data_dict['Stoch_K'][t-(n-1):t+1])
-			assert length == n
+			if t < 1: 
+				sum_val  = data_dict['Stoch_K'][t]
+			elif t < n: 
+				sum_val = sum(data_dict['Stoch_K'][:t])
+			else: 
+				sum_val= sum(data_dict['Stoch_K'][t-(n-1):t+1])
+				length = len(data_dict['Stoch_K'][t-(n-1):t+1])
+				assert length == n
 			new_timeseq.append(sum_val / n)
 		data_dict['Stoch_D'] = new_timeseq
 		assert len(data_dict['Stoch_D'])==data_length
@@ -111,12 +112,12 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 		new_timeseq = []
 		for t in range(data_length):
 			momentum = 0
-			# if t < n:
-			# 	first = data_dict['Close'][0]
-			# 	momentum = data_dict['Close'][t] - first
-			# else:
-			before = data_dict['Close'][t-4]
-			momentum = data_dict['Close'][t] - before
+			if t < n:
+				first = data_dict['Close'][0]
+				momentum = data_dict['Close'][t] - first
+			else:
+				before = data_dict['Close'][t-4]
+				momentum = data_dict['Close'][t] - before
 			new_timeseq.append(momentum)
 		data_dict['Momentum'] = new_timeseq
 		assert len(data_dict['Momentum'])==data_length
@@ -125,35 +126,35 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 		new_timeseq = []
 		for t in range(data_length):
 			roc = 0
-			# if t < n:
-			# 	first = data_dict['Close'][0]
-			# 	momentum = (data_dict['Close'][t] / first) * 100
-			# else:
-			before = data_dict['Close'][t-n]
-			roc = (data_dict['Close'][t] / before) * 100
+			if t < n:
+				first = data_dict['Close'][0]
+				momentum = (data_dict['Close'][t] / first) * 100
+			else:
+				before = data_dict['Close'][t-n]
+				roc = (data_dict['Close'][t] / before) * 100
 			new_timeseq.append(roc)
 		data_dict['ROC'] = new_timeseq
 		assert len(data_dict['ROC'])==data_length
 
-		
+
 		# calculate William's %R
 		new_timeseq = []
 		for t in range(data_length):
 			C_t = data_dict['Close'][t]
 			HH_n = 0
 			LL_n = 0
-			# if t < 1: 
-			# 	HH_n = data_dict['High'][t]
-			# 	LL_n = data_dict['Low'][t]
-			# elif t < n: 
-			# 	assert len(data_dict['High'][:t]) < n
-			# 	HH_n = max(data_dict['High'][:t])
-			# 	LL_n = max(data_dict['Low'][:t])
-			# else: 
-			length = len(data_dict['High'][t-n:t])
-			assert length == n
-			HH_n = max(data_dict['High'][t-n:t])
-			LL_n = max(data_dict['Low'][t-n:t])
+			if t < 1: 
+				HH_n = data_dict['High'][t]
+				LL_n = data_dict['Low'][t]
+			elif t < n: 
+				assert len(data_dict['High'][:t]) < n
+				HH_n = max(data_dict['High'][:t])
+				LL_n = max(data_dict['Low'][:t])
+			else: 
+				length = len(data_dict['High'][t-n:t])
+				assert length == n
+				HH_n = max(data_dict['High'][t-n:t])
+				LL_n = max(data_dict['Low'][t-n:t])
 			new_timeseq.append(100*(HH_n - C_t)/(HH_n-LL_n))
 		data_dict['WillR'] = new_timeseq
 		assert len(data_dict['WillR'])==data_length
@@ -164,10 +165,10 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 			H_t = data_dict['High'][t]
 			L_t = data_dict['Low'][t]
 			C_tprev = 0
-			# if t < 1:
-			# 	C_tprev = data_dict['Close'][t]
-			# else:
-			C_tprev = data_dict['Close'][t-1]
+			if t < 1:
+				C_tprev = data_dict['Close'][t]
+			else:
+				C_tprev = data_dict['Close'][t-1]
 			new_timeseq.append((H_t - C_tprev) / (H_t - L_t))
 
 		data_dict['AD'] = new_timeseq
@@ -175,16 +176,16 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 
 		# calculate Disparity 5
 		new_timeseq = []
-		for t in range(n, data_length):
+		for t in range(data_length):
 			C_t = data_dict['Close'][t]
 			MA = 0
-			# if t < 1:
-			# 	MA = data_dict['Close'][t]
-			# elif t < 5:
-			# 	MA = sum(data_dict['Close'][:t]) / len(data_dict['Close'][:t])
-			# else:
-			assert len(data_dict['Close'][t-5:t]) == 5
-			MA = sum(data_dict['Close'][t-5:t]) / 5
+			if t < 1:
+				MA = data_dict['Close'][t]
+			elif t < 5:
+				MA = sum(data_dict['Close'][:t]) / len(data_dict['Close'][:t])
+			else:
+				assert len(data_dict['Close'][t-5:t]) == 5
+				MA = sum(data_dict['Close'][t-5:t]) / 5
 			new_timeseq.append(100 * C_t / MA)
 		data_dict['Disp'] = new_timeseq
 		assert len(data_dict['Disp'])==data_length
@@ -332,21 +333,17 @@ def loadTitle(input_csv_path,n=5,randomize_sz=None):
 
 			headline_list_window = np.stack(headline_list_window, axis=-1)
 
-			# 56, 300, 25, 5
-			
-			# headline_list_window = torch.tensor(headline_list_window)
-			# headline_list_window = headline_list_window.permute(3, 1, 2, 0)
+			headline_list_window = torch.tensor(headline_list_window)
 			# print(headline_list_window.shape)
-			# assert headline_list_window.shape == (n, randomize_sz, max_sent_len)
 
 			word2vec_data.append(headline_list_window)
 			pbar.update(1)
+	print("about to stack...")	
 	print("data shape: ", torch.tensor(word2vec_data).shape)
-	print("about to stack...")
+	
 	word2vec_data = np.stack(word2vec_data,axis=0)
 	new_tensor = torch.Tensor(word2vec_data)
 	print("SHAPE: ", new_tensor.shape)
-	# #batch_size,25,300
 	new_tensor = new_tensor.permute(0, 3, 2, 1)
 	# new_tensor = new_tensor[n:,:,:]
 	targets = torch.Tensor(targets[n:])
