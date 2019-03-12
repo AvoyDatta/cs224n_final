@@ -69,7 +69,7 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 
 
 		#calculate Stoch_K 
-		data_length = len(data_dict['High'])
+		data_length = len(data_dict['High']) # 1988
 		new_timeseq = []
 		for t in range(data_length):
 			C_t = data_dict['Close'][t]
@@ -316,8 +316,6 @@ def loadTitle(input_csv_path,n=5,randomize_sz=None):
 						pad_len = max_sent_len - len(headline_words)
 						for pad_idx in range(pad_len):
 							headline_words.append(np.zeros(embed_size))
-
-					if len(headline_words) != 56: print("padded len: ", len(headline_words))
 					assert len(headline_words) == max_sent_len
 					headline_list_day.append(headline_words)
 				# print("num headlines in one day:", len(headline_list_day))
@@ -333,18 +331,21 @@ def loadTitle(input_csv_path,n=5,randomize_sz=None):
 
 			headline_list_window = np.stack(headline_list_window, axis=-1)
 
-			headline_list_window = torch.tensor(headline_list_window)
+			# headline_list_window = torch.tensor(headline_list_window)
+			# torch.Size([56, 300, 25, 5])
 			# print(headline_list_window.shape)
 
 			word2vec_data.append(headline_list_window)
 			pbar.update(1)
+
 	print("about to stack...")	
-	print("data shape: ", torch.tensor(word2vec_data).shape)
-	
+	print(len(word2vec_data), len(word2vec_data[0]))
 	word2vec_data = np.stack(word2vec_data,axis=0)
+	print("stacked")
 	new_tensor = torch.Tensor(word2vec_data)
 	print("SHAPE: ", new_tensor.shape)
-	new_tensor = new_tensor.permute(0, 3, 2, 1)
+	# want (batch, window_len, num_titles, embed_sz, max_words)
+	new_tensor = new_tensor.permute(0, 4, 3, 2, 1)
 	# new_tensor = new_tensor[n:,:,:]
 	targets = torch.Tensor(targets[n:])
 	print("NEW SHAPE: ", new_tensor.shape)
@@ -356,7 +357,7 @@ def loadTitle(input_csv_path,n=5,randomize_sz=None):
 
 
 # to test
-loadTechnical('DJIA_table.csv',n=5,input_size=7)
+# loadTechnical('DJIA_table.csv',n=5,input_size=7)
 
 loadTitle('Combined_News_DJIA.csv')
 
