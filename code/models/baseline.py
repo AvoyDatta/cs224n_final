@@ -16,7 +16,7 @@ Options:
 	--data_path=<file>                Path to data
 	--num_epochs=<int>                Number of epochs to train for
 	--batch_sz=<int>                  Batch size [default: 128]
-	--randomize_sz=<int>			  Number of randomized titles to choose per day
+	--randomize_sz=<int>			  Number of randomized titles to choose per day [default:25]
 """
 from docopt import docopt
 
