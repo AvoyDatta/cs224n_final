@@ -15,7 +15,7 @@ import os
 from tqdm import tqdm
 import time
 import random
-nltk.download('stopwords')
+# nltk.download('punkt')
 
 class DJIA_Dataset(Dataset):
 	def __init__(self,path_technical_csv,path_title_csv,randomize_sz=25):
@@ -74,18 +74,18 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 			C_t = data_dict['Close'][t]
 			HH_n = 0
 			LL_n = 0
-			if t < 1: 
-				HH_n = data_dict['High'][t]
-				LL_n = data_dict['Low'][t]
-			elif t < n: 
-				assert len(data_dict['High'][:t]) < n
-				HH_n = max(data_dict['High'][:t])
-				LL_n = max(data_dict['Low'][:t])
-			else: 
-				length = len(data_dict['High'][t-n:t])
-				assert length == n
-				HH_n = max(data_dict['High'][t-n:t])
-				LL_n = max(data_dict['Low'][t-n:t])
+			# if t < 1: 
+			# 	HH_n = data_dict['High'][t]
+			# 	LL_n = data_dict['Low'][t]
+			# elif t < n: 
+			# 	assert len(data_dict['High'][:t]) < n
+			# 	HH_n = max(data_dict['High'][:t])
+			# 	LL_n = max(data_dict['Low'][:t])
+			# else: 
+			length = len(data_dict['High'][t-n:t])
+			assert length == n
+			HH_n = max(data_dict['High'][t-n:t])
+			LL_n = max(data_dict['Low'][t-n:t])
 			new_timeseq.append((C_t -LL_n)/(HH_n-LL_n))
 		data_dict['Stoch_K'] = new_timeseq
 		assert len(data_dict['Stoch_K'])==data_length
@@ -94,14 +94,14 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 		new_timeseq = []
 		for t in range(data_length):
 			sum_val = 0
-			if t < 1: 
-				sum_val  = data_dict['Stoch_K'][t]
-			elif t < n: 
-				sum_val = sum(data_dict['Stoch_K'][:t])
-			else: 
-				sum_val= sum(data_dict['Stoch_K'][t-(n-1):t+1])
-				length = len(data_dict['Stoch_K'][t-(n-1):t+1])
-				assert length == n
+			# if t < 1: 
+			# 	sum_val  = data_dict['Stoch_K'][t]
+			# elif t < n: 
+			# 	sum_val = sum(data_dict['Stoch_K'][:t])
+			# else: 
+			sum_val= sum(data_dict['Stoch_K'][t-(n-1):t+1])
+			length = len(data_dict['Stoch_K'][t-(n-1):t+1])
+			assert length == n
 			new_timeseq.append(sum_val / n)
 		data_dict['Stoch_D'] = new_timeseq
 		assert len(data_dict['Stoch_D'])==data_length
@@ -111,12 +111,12 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 		new_timeseq = []
 		for t in range(data_length):
 			momentum = 0
-			if t < n:
-				first = data_dict['Close'][0]
-				momentum = data_dict['Close'][t] - first
-			else:
-				before = data_dict['Close'][t-4]
-				momentum = data_dict['Close'][t] - before
+			# if t < n:
+			# 	first = data_dict['Close'][0]
+			# 	momentum = data_dict['Close'][t] - first
+			# else:
+			before = data_dict['Close'][t-4]
+			momentum = data_dict['Close'][t] - before
 			new_timeseq.append(momentum)
 		data_dict['Momentum'] = new_timeseq
 		assert len(data_dict['Momentum'])==data_length
@@ -125,12 +125,12 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 		new_timeseq = []
 		for t in range(data_length):
 			roc = 0
-			if t < n:
-				first = data_dict['Close'][0]
-				momentum = (data_dict['Close'][t] / first) * 100
-			else:
-				before = data_dict['Close'][t-n]
-				roc = (data_dict['Close'][t] / before) * 100
+			# if t < n:
+			# 	first = data_dict['Close'][0]
+			# 	momentum = (data_dict['Close'][t] / first) * 100
+			# else:
+			before = data_dict['Close'][t-n]
+			roc = (data_dict['Close'][t] / before) * 100
 			new_timeseq.append(roc)
 		data_dict['ROC'] = new_timeseq
 		assert len(data_dict['ROC'])==data_length
@@ -142,18 +142,18 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 			C_t = data_dict['Close'][t]
 			HH_n = 0
 			LL_n = 0
-			if t < 1: 
-				HH_n = data_dict['High'][t]
-				LL_n = data_dict['Low'][t]
-			elif t < n: 
-				assert len(data_dict['High'][:t]) < n
-				HH_n = max(data_dict['High'][:t])
-				LL_n = max(data_dict['Low'][:t])
-			else: 
-				length = len(data_dict['High'][t-n:t])
-				assert length == n
-				HH_n = max(data_dict['High'][t-n:t])
-				LL_n = max(data_dict['Low'][t-n:t])
+			# if t < 1: 
+			# 	HH_n = data_dict['High'][t]
+			# 	LL_n = data_dict['Low'][t]
+			# elif t < n: 
+			# 	assert len(data_dict['High'][:t]) < n
+			# 	HH_n = max(data_dict['High'][:t])
+			# 	LL_n = max(data_dict['Low'][:t])
+			# else: 
+			length = len(data_dict['High'][t-n:t])
+			assert length == n
+			HH_n = max(data_dict['High'][t-n:t])
+			LL_n = max(data_dict['Low'][t-n:t])
 			new_timeseq.append(100*(HH_n - C_t)/(HH_n-LL_n))
 		data_dict['WillR'] = new_timeseq
 		assert len(data_dict['WillR'])==data_length
@@ -164,10 +164,10 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 			H_t = data_dict['High'][t]
 			L_t = data_dict['Low'][t]
 			C_tprev = 0
-			if t < 1:
-				C_tprev = data_dict['Close'][t]
-			else:
-				C_tprev = data_dict['Close'][t-1]
+			# if t < 1:
+			# 	C_tprev = data_dict['Close'][t]
+			# else:
+			C_tprev = data_dict['Close'][t-1]
 			new_timeseq.append((H_t - C_tprev) / (H_t - L_t))
 
 		data_dict['AD'] = new_timeseq
@@ -175,16 +175,16 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 
 		# calculate Disparity 5
 		new_timeseq = []
-		for t in range(data_length):
+		for t in range(n, data_length):
 			C_t = data_dict['Close'][t]
 			MA = 0
-			if t < 1:
-				MA = data_dict['Close'][t]
-			elif t < 5:
-				MA = sum(data_dict['Close'][:t]) / len(data_dict['Close'][:t])
-			else:
-				assert len(data_dict['Close'][t-5:t]) == 5
-				MA = sum(data_dict['Close'][t-5:t]) / 5
+			# if t < 1:
+			# 	MA = data_dict['Close'][t]
+			# elif t < 5:
+			# 	MA = sum(data_dict['Close'][:t]) / len(data_dict['Close'][:t])
+			# else:
+			assert len(data_dict['Close'][t-5:t]) == 5
+			MA = sum(data_dict['Close'][t-5:t]) / 5
 			new_timeseq.append(100 * C_t / MA)
 		data_dict['Disp'] = new_timeseq
 		assert len(data_dict['Disp'])==data_length
@@ -205,7 +205,7 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 		# print(new_tensor.shape)
 		return new_tensor
 
-def loadTitle(input_csv_path,randomize_sz=None):
+def loadTitle(input_csv_path,n=5,randomize_sz=None):
 	"""
 	input: input_csv_path
 	input: randomize_sz: choose the number of titles to randomly choose from to incorporate into titles for a particular day
@@ -224,7 +224,7 @@ def loadTitle(input_csv_path,randomize_sz=None):
 	for i in range(len(data)): 
 		# print(len(data[i]))
 		for j in range(len(data[i])):
-			if data[i][j][0] == 'b':
+			if data[i][j][0] == 'b': # might accidentally remove first b..
 				data[i][j] = data[i][j][1:]
 
 	targets = []
@@ -262,84 +262,104 @@ def loadTitle(input_csv_path,randomize_sz=None):
 	
 	### LOAD MODEL FROM SCRATCH
 	# https://nlp.stanford.edu/projects/glove/ : glove.6b.zip
-	
 
-	
+	# (batch, n, embed size, num_titles, num_words)
 
 	#convert titles to word2vec
 	word2vec_data = []
 
-	embed_size = 300 # 50 for glove.6B.50d. will be 300 for goog news
+	embed_size = 300 
 
 	stop_words = set(stopwords.words('english'))
 
+	max_sent_len = 0 # over all data, without stopwords or out-of-vocab words
+
+	for i in range(n, len(data)):
+		data_row = data[i][2:]
+		for hline in data_row:
+			toks = [tok for tok in nltk.word_tokenize(hline) if tok in set_vocab and tok not in stop_words]
+			max_sent_len = max(max_sent_len, len(toks))
+
 	print("Loading titles...")
-	with tqdm(total=len(data)) as pbar: 
-		for i in range(len(data)):
-			headline_list = []
-			data_row = data[i][2:]
+	with tqdm(total=len(data)-n) as pbar: 
+		# skip first n days
+		for i in range(n, len(data)):
+			# data_window = []
+			# look back on previous n days
+			data_window = [data[j][2:] for j in range(i-5, i)]
+			assert len(data_window) == n
+			
+			# data_row = data[i][2:]
 
 			#title choice randomization
 			if randomize_sz is not None:
-				random.shuffle(data_row)
-				aux = []
-				for random_sample in range(randomize_sz):
-					if random_sample >= len(data_row): break
-					aux.append(data_row[random_sample])
-				data_row = aux
+				random.shuffle(data_row for data_row in data_window)	
+				for row_index in range(len(data_window)):
+					data_row = data_window[row_index]
+					aux = []
+					for random_sample in range(randomize_sz):
+						if random_sample >= len(data_row): break
+						aux.append(data_row[random_sample])
+					data_window[row_index] = aux
 
-			for headline in data_row:
+			# print("max sent len: ", max_sent_len)
+			headline_list_window = []
+			for data_row in data_window:
+				headline_list_day = []
+				for headline in data_row:
+					# headline_words = np.concatenate(np.array([[model[word] for word in nltk.word_tokenize(headline) if word in set_vocab and word not in stop_words]]))
+					headline_words = [model[word] for word in nltk.word_tokenize(headline) if word in set_vocab and word not in stop_words]
+					# print("len of headline: ", len(headline_words))
+					# pad to max sentence length
+					if len(headline_words) < max_sent_len:
+						pad_len = max_sent_len - len(headline_words)
+						for pad_idx in range(pad_len):
+							headline_words.append(np.zeros(embed_size))
 
-				# t1 = time.time()
-				# a = [word for word in nltk.word_tokenize(headline) if word in set_vocab]
-				# t2 = time.time()
+					if len(headline_words) != 56: print("padded len: ", len(headline_words))
+					assert len(headline_words) == max_sent_len
+					headline_list_day.append(headline_words)
+				# print("num headlines in one day:", len(headline_list_day))
 
-				# print("lookin up whether each word in headline exists in vocab takes: {} seconds \n".format(t2-t1))
+				# pad to 25
+				if len(headline_list_day) < 25:
+					pad_len = 25 - len(headline_list_day)
+					for i in range(pad_len):
+						headline_list_day.append([np.zeros(embed_size)] * max_sent_len)
 
-				# t1 = time.time()
-				word_vecs = np.concatenate(np.array([[model[word] for word in nltk.word_tokenize(headline) if word in set_vocab and word not in stop_words]]))
-				# t2 = time.time()
-				# print("creating word vecs takes: {} seconds".format(t2-t1))
-				
-				# in rare case that headline has no words that appear in model vocab. 
-				if len(word_vecs) == 0:
-					word_vecs = np.zeros((1, embed_size))
+				headline_list_day = np.stack(headline_list_day, axis=-1)
+				headline_list_window.append(headline_list_day)
 
-				headline_vec = np.mean(word_vecs, axis=0) # [np.newaxis,:]
-				headline_list.append(headline_vec)
+			headline_list_window = np.stack(headline_list_window, axis=-1)
 
-			headline_list = np.stack(headline_list, axis=-1)
+			# 56, 300, 25, 5
+			
+			# headline_list_window = torch.tensor(headline_list_window)
+			# headline_list_window = headline_list_window.permute(3, 1, 2, 0)
+			# print(headline_list_window.shape)
+			# assert headline_list_window.shape == (n, randomize_sz, max_sent_len)
 
-			# pad if < 25 headlines
-			if headline_list.shape != (embed_size,25):
-				# print("oops")
-				# print(headline_list.shape)
-				_,m = headline_list.shape
-				n = 25
-				a = np.zeros((embed_size,25))
-				a[:,:m]= headline_list
-				headline_list = a 
-				# print('changed to: ',headline_list.shape)
-			word2vec_data.append(headline_list)
+			word2vec_data.append(headline_list_window)
 			pbar.update(1)
-
-	# #batch_size,300,25
-
+	print("data shape: ", torch.tensor(word2vec_data).shape)
+	print("about to stack...")
 	word2vec_data = np.stack(word2vec_data,axis=0)
 	new_tensor = torch.Tensor(word2vec_data)
-
+	print("SHAPE: ", new_tensor.shape)
 	# #batch_size,25,300
-	new_tensor = new_tensor.permute(0,2,1)
-	new_tensor = new_tensor[5:,:,:]
-	targets = torch.Tensor(targets[5:])
+	new_tensor = new_tensor.permute(0, 3, 2, 1)
+	# new_tensor = new_tensor[n:,:,:]
+	targets = torch.Tensor(targets[n:])
+	print("NEW SHAPE: ", new_tensor.shape)
 
-	# print(new_tensor.shape)
+	print(new_tensor.shape)
 	# print(new_tensor)
 	print("Completed loading titles")
 	return (targets,new_tensor)
 
 
 # to test
+loadTechnical('DJIA_table.csv',n=5,input_size=7)
 
-# loadTitle('Combined_News_DJIA.csv')
+loadTitle('Combined_News_DJIA.csv')
 
