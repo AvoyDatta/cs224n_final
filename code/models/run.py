@@ -36,8 +36,15 @@ print(sys.path)
 
 import data_utils
 
+<<<<<<< HEAD
 from RCNN_base import Config_base, RCNN_base
+=======
+from RCNN import Config, RCNN
+from RCNN_concat_outputs import Config_concat,RCNN_concat_outputs
+
+>>>>>>> d5e47a8401130819a1942315f100a4df8803d2fe
 from torch.utils.data import DataLoader
+
 
 
 baseline_model_path = "../../trained_models/baseline/baseline.pt"
@@ -75,7 +82,11 @@ def train(args, config):
 	#Stores hyperparams for model
 	
 
+<<<<<<< HEAD
 	model = RCNN_base(config)
+=======
+	model = RCNN_concat_outputs(config)
+>>>>>>> d5e47a8401130819a1942315f100a4df8803d2fe
 	model.to(device)
 
 	optimizer = torch.optim.SGD(model.parameters(), lr= baseline_step, momentum = baseline_momentum)
@@ -231,7 +242,7 @@ def test(args, config):
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	load_path = baseline_model_path 
 
-	model = RCNN(config)
+	model = RCNN_concat_outputs(config)
 	model.to(device)
 
 	if (load_path != None):  #If model is retrained from saved ckpt
@@ -288,7 +299,8 @@ def test(args, config):
 def main():
 	args = docopt(__doc__)
 
-	config = Config_base(batch_sz = int(args['--batch_sz']), num_conv = 10)
+	config = Config_concat(batch_sz = int(args['--batch_sz']))
+>>>>>>> d5e47a8401130819a1942315f100a4df8803d2fe
 
 	if args['--num_batches']: config.num_batches = int(args['--num_batches'])
 

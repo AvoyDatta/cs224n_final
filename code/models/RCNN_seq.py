@@ -54,10 +54,11 @@ class RCNN_seq(nn.Module):
 		print("RCNN_seq config: ", config.__dict__)
 		self.conv_title = nn.Conv1d(config.title_dim, config.n_filters_title, config.filter_sz_title)
 
-		self.max_pool_title = nn.MaxPool1d(config.pool_sz, stride = 1) #Dim increases by 1
+		self.max_pool_title = nn.MaxPool1d(config.pool_sz, stride = 1) #Dim deceases by 1
 		self.relu = nn.ReLU()
 		#self.dropout = nn.Dropout(config.p_drop)
 		self.conv_day = nn.Conv1d(config.n_filters_title, config.n_filters_day, config.filter_sz_day)
+		self.max_pool_day = nn.MaxPool1d(self.num_titles + )
 
 		self.lstm = nn.LSTM(config.input_dim_LSTM, config.n_hidden_LSTM)
 
@@ -73,7 +74,7 @@ class RCNN_seq(nn.Module):
 	"""
 	Forward pass for the RCNN.
 	Inputs: 
-		titles: Batched Tensor of news embedding vectors for n_days_news number of 
+		titles: Batched Tensor of news embedding vectors. Shape: (Batch, window_len_days, embed_size, num_titles_day, max_words_in_title)
 		tech_indicators: Batched tensor of tech indicators. Each batch element has indicators (dim 7) for a window of size n = 5. Expected dims: (seq_len, batch, input_dim)
 	"""
 
