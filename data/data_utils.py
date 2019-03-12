@@ -116,7 +116,7 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 				first = data_dict['Close'][0]
 				momentum = data_dict['Close'][t] - first
 			else:
-				before = data_dict['Close'][t-4]
+				before = data_dict['Close'][t-(n-1)]
 				momentum = data_dict['Close'][t] - before
 			new_timeseq.append(momentum)
 		data_dict['Momentum'] = new_timeseq
@@ -189,10 +189,10 @@ def loadTechnical(input_csv_path,n=5,input_size=7):
 			new_timeseq.append(100 * C_t / MA)
 		data_dict['Disp'] = new_timeseq
 		assert len(data_dict['Disp'])==data_length
-		# print(data_length)
-		tensor = np.array([data_dict['Stoch_K'],data_dict['Stoch_D'],data_dict['Momentum'],data_dict['ROC'],data_dict['WillR'],data_dict['AD'],data_dict['Disp']])
-		# print(tens.shape)
-		# print(tens.shape)
+		
+		# skip overr first n days
+		tensor = np.array([data_dict['Stoch_K'][n:],data_dict['Stoch_D'][n:],data_dict['Momentum'][n:],data_dict['ROC'][n:],data_dict['WillR'][n:],data_dict['AD'][n:],data_dict['Disp'][n:]])
+
 		sequence_len = tensor.shape[1]
 		stack = []
 		for i in range(n,sequence_len): 
@@ -359,5 +359,5 @@ def loadTitle(input_csv_path,n=5,randomize_sz=None):
 # to test
 # loadTechnical('DJIA_table.csv',n=5,input_size=7)
 
-loadTitle('Combined_News_DJIA.csv')
+# loadTitle('Combined_News_DJIA.csv')
 
