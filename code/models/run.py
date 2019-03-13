@@ -36,13 +36,11 @@ print(sys.path)
 
 import data_utils
 
-<<<<<<< HEAD
 from RCNN_base import Config_base, RCNN_base
-=======
+from RCNN_seq import Config_seq, RCNN_seq
 from RCNN import Config, RCNN
 from RCNN_concat_outputs import Config_concat,RCNN_concat_outputs
 
->>>>>>> d5e47a8401130819a1942315f100a4df8803d2fe
 from torch.utils.data import DataLoader
 
 
@@ -82,11 +80,7 @@ def train(args, config):
 	#Stores hyperparams for model
 	
 
-<<<<<<< HEAD
-	model = RCNN_base(config)
-=======
-	model = RCNN_concat_outputs(config)
->>>>>>> d5e47a8401130819a1942315f100a4df8803d2fe
+	model = RCNN_seq(config)
 	model.to(device)
 
 	optimizer = torch.optim.SGD(model.parameters(), lr= baseline_step, momentum = baseline_momentum)
@@ -299,7 +293,7 @@ def test(args, config):
 def main():
 	args = docopt(__doc__)
 
-	config = Config_concat(batch_sz = int(args['--batch_sz']))
+	config = Config_seq(batch_sz = int(args['--batch_sz']))
 
 	if args['--num_batches']: config.num_batches = int(args['--num_batches'])
 
