@@ -34,3 +34,5 @@ trained_models/baseline/baseline_nti.pt
 *.txt
 *.xml
 *.iml
+data/glove_word2vec300.model
+data/glove_word2vec300.model.vectors.npy

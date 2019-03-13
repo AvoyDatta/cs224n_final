@@ -357,7 +357,10 @@ def loadTitle(input_csv_path,n=5,randomize_sz=None):
 
 
 # to test
+if __name__ == "__main__":
+
 # loadTechnical('DJIA_table.csv',n=5,input_size=7)
 
-# loadTitle('Combined_News_DJIA.csv')
+	targets,new_tensor = loadTitle('Combined_News_DJIA.csv')
+	# print(new_tensor.shape)
 
