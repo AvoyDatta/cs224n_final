@@ -18,13 +18,13 @@ import random
 # nltk.download('punkt')
 
 class DJIA_Dataset(Dataset):
-	def __init__(self,path_technical_csv,path_title_csv,randomize_sz=25):
+	def __init__(self,path_technical_csv,path_title_csv,randomize_sz=None):
 		"""
 		path_technical_csv: path to technical csv
 		path_title_csv: path to csv with titles of articles
 		"""
 		self.technical_data = loadTechnical(path_technical_csv)
-		self.targets,self.title_data = loadTitle(path_title_csv,randomize_sz=randomize_sz)
+		self.targets,self.title_data = loadTitle(path_title_csv, n = 5, randomize_sz=randomize_sz)
 		self.length = self.targets.shape[0]
 
 	def __len__(self):
