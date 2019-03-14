@@ -98,8 +98,8 @@ def train(args, config):
 	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=randomize_sz)
 	data_train = utils.data.Subset(data, [i for i in range(1600)])
 
-	dataset_val = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
-	data_val = utils.data.Subset(dataset_val,[i for i in range(1601,1800)])
+	#dataset_val = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
+	data_val = utils.data.Subset(data,[i for i in range(1601,1800)])
 
 	dataloader_train = DataLoader(data_train, batch_size = int(config.batch_sz))
 	dataloader_val = DataLoader(data_val,batch_size=int(config.batch_sz))

@@ -15,7 +15,6 @@ import os
 from tqdm import tqdm
 import time
 import random
-<<<<<<< HEAD
 #nltk.download('punkt')
 #nltk.download("stopwords")
 
@@ -42,7 +41,7 @@ class DJIA_Dataset(Dataset):
 		"""
         # print(self.title_data.shape)
         # print(self.technical_data.shape)
-        return {"titles": self.title_data[index, :, :].permute(1, 0),
+        return {"titles": self.title_data[index, :, :,:,:],
                 "tech_indicators": self.technical_data[:, index, :],
                 "movement": self.targets[index].type(torch.LongTensor)}
 
@@ -215,7 +214,7 @@ def loadTitle(input_csv_path, n=5, randomize_sz=None):
     """
 	input: input_csv_path
 	input: randomize_sz: choose the number of titles to randomly choose from to incorporate into titles for a particular day
-	output: Tuple(Tensor of size (batch_size,channels=num_titles,seq_len=300),targets)
+	output: Tuple(Tensor of size (batch_size,channels=num_titles,seq_len=300),targets) #modified
 	"""
     if randomize_sz is not None:
         print("randomly choosing {} titles per day".format(randomize_sz))

@@ -86,6 +86,8 @@ class RCNN_seq(nn.Module):
 
 	def forward(self, titles, tech_indicators):
 		
+		tech_indicators = tech_indicators.permute(1,0,2)
+		
 		#print("Input titles shape: ", titles.shape)
 		titles_reshaped = titles.contiguous().view(titles.size(0) * titles.size(1) * titles.size(2), titles.size(3), titles.size(4)) 
 		#(batch * window_len_days * num_titles_day, num_filters_title, words_title - filter_sz_title + 1)
@@ -137,7 +139,7 @@ class RCNN_seq(nn.Module):
 		# #print(dropped_relu.shape)
 		relud_pool_day_reshaped = relud_pool_day.permute(1, 0, 2) #Out: (window_len_days, batch, num_filters_day)
 
-		concat_input = torch.cat((relud_pool_day_reshaped, tech_indicators), dim = 2) #Size: (window_len_days==seq_len_tech, batch, input_dim_tech + num_filters_day)
+		concat_input = torch.cat((relud_pool_day_reshaped, tech_indicators, dim = 2) #Size: (window_len_days==seq_len_tech, batch, input_dim_tech + num_filters_day)
 
 		#print("LSTM inputs: ", concat_input.shape)
 
