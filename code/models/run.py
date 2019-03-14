@@ -6,8 +6,8 @@ Main model
 run.py
 
 Usage:
-	baseline.py train --batch_sz=<int> --num_batches=<int> --print_every=<int> --save_every=<int> --num_epochs=<int> --randomize_sz=<int>
-	baseline.py test --batch_sz=<int>
+	run.py train --batch_sz=<int> --num_batches=<int> --print_every=<int> --save_every=<int> --num_epochs=<int> --randomize_sz=<int>
+	run.py test --batch_sz=<int>
 
 Options:
 	--num_batches=<int>               Number of minibatches per epoch[default:1000]
@@ -45,7 +45,7 @@ from torch.utils.data import DataLoader
 
 
 
-baseline_model_path = "../../trained_models/baseline/baseline.pt"
+main_model_path = "../../trained_models/RCNN_seq/RCNN_seq.pt"
 
 def backprop(optimizer, logits, labels):
 
@@ -62,18 +62,18 @@ def get_accuracy(logits, labels):
 	
 def train(args, config):
 	"""
-	Train baseline model
+	Train main model
 	"""
 
 	print("Training initiated...")
 
-	baseline_step = 0.1
-	baseline_momentum = 0.9
+	optimizer_step = 0.1
+	optimizer_momentum = 0.9
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	print_every = int(args['--print_every']) 
 	num_epochs = int(args['--num_epochs'])
 	save_every = int(args['--save_every']) 
-	save_path = baseline_model_path 
+	save_path = main_model_path 
 	num_batches = int(args['--num_batches'])
 
 
@@ -83,7 +83,7 @@ def train(args, config):
 	model = RCNN_seq(config)
 	model.to(device)
 
-	optimizer = torch.optim.SGD(model.parameters(), lr= baseline_step, momentum = baseline_momentum)
+	optimizer = torch.optim.SGD(model.parameters(), lr= optimizer_step, momentum = optimizer_momentum)
 
 	# train_data_path = args['--data_path'] 
 	# if train_data_path == None: 
@@ -234,7 +234,7 @@ def test(args, config):
 	#print("Finished loading training data from {}".format(train_data_path))
 
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-	load_path = baseline_model_path 
+	load_path = main_model_path 
 
 	model = RCNN_concat_outputs(config)
 	model.to(device)

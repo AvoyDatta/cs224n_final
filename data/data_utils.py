@@ -15,7 +15,8 @@ import os
 from tqdm import tqdm
 import time
 import random
-# nltk.download('punkt')
+#nltk.download('punkt')
+#nltk.download("stopwords")
 
 class DJIA_Dataset(Dataset):
 	def __init__(self,path_technical_csv,path_title_csv,randomize_sz=None):
