@@ -193,8 +193,8 @@ def loadTechnical(input_csv_path, n=5, input_size=7):
 
         # skip overr first n days
         tensor = np.array(
-            [data_dict['Stoch_K'][n:], data_dict['Stoch_D'][n:], data_dict['Momentum'][n:], data_dict['ROC'][n:],
-             data_dict['WillR'][n:], data_dict['AD'][n:], data_dict['Disp'][n:]])
+            [data_dict['Stoch_K'], data_dict['Stoch_D'], data_dict['Momentum'], data_dict['ROC'],
+             data_dict['WillR'], data_dict['AD'], data_dict['Disp']])
 
         sequence_len = tensor.shape[1]
         stack = []
@@ -366,8 +366,8 @@ def loadTitle(input_csv_path, n=5, randomize_sz=None):
 
 # to test
 if __name__ == "__main__":
-    # loadTechnical('DJIA_table.csv',n=5,input_size=7)
+    loadTechnical('DJIA_table.csv',n=5,input_size=7)
 
-    targets, new_tensor = loadTitle('Combined_News_DJIA.csv')
+    # targets, new_tensor = loadTitle('Combined_News_DJIA.csv')
 # print(new_tensor.shape)
 
