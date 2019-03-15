@@ -28,7 +28,10 @@ class DJIA_Dataset(Dataset):
 		path_title_csv: path to csv with titles of articles
 		"""
         self.technical_data = loadTechnical(path_technical_csv)
+        print("technical data dims: ", self.technical_data.shape)
         self.targets, self.title_data = loadTitle(path_title_csv, randomize_sz=randomize_sz)
+        print("Title data dims: ", self.title_data.shape)
+        print("Targets dims: ", self.targets.shape)
         self.length = self.targets.shape[0]
 
     def __len__(self):
