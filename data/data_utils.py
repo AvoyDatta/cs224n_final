@@ -219,6 +219,7 @@ def loadTitle(input_csv_path, n=5, randomize_sz=None):
 	input: randomize_sz: choose the number of titles to randomly choose from to incorporate into titles for a particular day
 	output: Tuple(Tensor of size (batch_size,channels=num_titles,seq_len=300),targets) #modified
 	"""
+
     if randomize_sz is not None:
         print("randomly choosing {} titles per day".format(randomize_sz))
     with open(input_csv_path, 'r') as csvfile:
@@ -369,8 +370,8 @@ def loadTitle(input_csv_path, n=5, randomize_sz=None):
 
 # to test
 if __name__ == "__main__":
-    # loadTechnical('DJIA_table.csv',n=5,input_size=7)
-    targets, new_tensor = loadTitle('Combined_News_DJIA.csv')
-    # print(targets[0:10])
+    loadTechnical('DJIA_table.csv',n=5,input_size=7)
+
+    # targets, new_tensor = loadTitle('Combined_News_DJIA.csv')
 # print(new_tensor.shape)
 

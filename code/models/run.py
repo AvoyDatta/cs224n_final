@@ -95,7 +95,7 @@ def train(args, config):
 	##############LOAD TRAIN DATA and initiate train
 
 	randomize_sz = None if int(args['--randomize_sz']) == -1 else int(args['--randomize_sz'])
-	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=randomize_sz)
+	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
 	data_train = utils.data.Subset(data, [i for i in range(1600)])
 
 	#dataset_val = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
@@ -141,6 +141,10 @@ def train(args, config):
 					model.train()
 
 					titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
+					tech_indicators = tech_indicators.permute(1, 0, 2)
+					#if index == 0:
+					print("tech_indicators sample dim: ", tech_indicators.shape, "titles sample dim: ", titles.shape)
+
 					titles.to(device)
 					tech_indicators.to(device)
 					movement.to(device)
@@ -157,6 +161,8 @@ def train(args, config):
 					with torch.no_grad():
 						for index,sample in enumerate(dataloader_val):
 							titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
+							tech_indicators = tech_indicators.permute(1, 0, 2)
+
 							logits = model.forward(titles,tech_indicators)
 
 							titles.to(device)
@@ -178,6 +184,8 @@ def train(args, config):
 					
 					train_losses.append(loss)
 					train_accs.append(accuracy)
+
+				pbar.update(1)
 
 			if epoch % print_every == 0: 
 				print ("Epoch: {}, Training iter: {}, Time since start: {}, Loss: {}, Training Accuracy: {}".format(epoch, train_ctr, (time.time() - start), loss, accuracy))
