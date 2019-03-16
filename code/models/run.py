@@ -6,11 +6,11 @@ Main model
 run.py
 
 Usage:
-	run.py train --batch_sz=<int> --num_batches=<int> --print_every=<int> --save_every=<int> --num_epochs=<int> --randomize_sz=<int>
+	run.py train --batch_sz=<int> --lr=<float> --print_every=<int> --save_every=<int> --num_epochs=<int> --randomize_sz=<int>
 	run.py test --batch_sz=<int>
 
 Options:
-	--num_batches=<int>               Number of minibatches per epoch[default:1000]
+	--lr=<float>               		  Learning rate [default: 0.01]
 	--print_every=<int>               Specifies frequency of epochs with which metrics are printed [default: 1]
 	--save_every=<int>                Specifies frequency of epochs with which model is saved [default: 5]
 	--data_path=<file>                Path to data
@@ -67,14 +67,13 @@ def train(args, config):
 
 	print("Training initiated...")
 
-	optimizer_step = 0.1
+	optimizer_step = float(args['--lr'])
 	optimizer_momentum = 0.9
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	print_every = int(args['--print_every']) 
 	num_epochs = int(args['--num_epochs'])
 	save_every = int(args['--save_every']) 
 	save_path = main_model_path 
-	num_batches = int(args['--num_batches'])
 
 
 	#Stores hyperparams for model
@@ -306,8 +305,6 @@ def main():
 	args = docopt(__doc__)
 
 	config = Config_seq(batch_sz = int(args['--batch_sz']))
-
-	if args['--num_batches']: config.num_batches = int(args['--num_batches'])
 
 	if args['train']:
 

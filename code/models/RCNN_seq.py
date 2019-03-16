@@ -296,8 +296,8 @@ class RCNN_seq_attn(nn.Module):
 		attn_proj = attn_proj.squeeze(-1)
 		# print(self.attn_vector.data)
 		# print(self.attn_vector.data.grad)
-		print("Attn proj: ", attn_proj.shape)
-		print(self.attn_layer.weight)
+		#print("Attn proj: ", attn_proj.shape)
+		#print(self.attn_layer.weight)
 
 		# print("Attn proj: ", attn_proj.shape)
 
@@ -340,7 +340,7 @@ if __name__ == "__main__":
 	y =torch.randint(0,2,(config.batch_sz,1))
 	y = torch.squeeze(y)
 	# ##print(y)
-	optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
+	optimizer = torch.optim.SGD(model.parameters(), lr=1e-2)
 	num_iters=10000
 	for t in range(num_iters):
 	    # Forward pass: Compute predicted y by passing x to the model
