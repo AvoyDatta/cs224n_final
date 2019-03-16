@@ -14,3 +14,6 @@ Test_loss: 0.771681 , Test Accuracy: 0.484988
 Test_loss: 0.771681 , Test Accuracy: 0.484988
 Test_loss: 0.771681 , Test Accuracy: 0.484988
 Test_loss: 0.771681 , Test Accuracy: 0.484988
+Test_loss: 0.9960951 , Test Accuracy: 0.5339912
+Test_loss: 0.7194545 , Test Accuracy: 0.5339912
+Test_loss: 0.69199866 , Test Accuracy: 0.51644737

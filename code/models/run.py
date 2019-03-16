@@ -143,11 +143,13 @@ def train(args, config):
 					titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
 					tech_indicators = tech_indicators.permute(1, 0, 2)
 					#if index == 0:
-					print("tech_indicators sample dim: ", tech_indicators.shape, "titles sample dim: ", titles.shape)
+					# print("tech_indicators sample dim: ", tech_indicators.shape, "titles sample dim: ", titles.shape)
 
-					titles.to(device)
-					tech_indicators.to(device)
-					movement.to(device)
+
+
+					titles = titles.to(device)
+					tech_indicators = tech_indicators.to(device)
+					movement = movement.to(device)
 
 					logits = model.forward(titles, tech_indicators)
 					loss = model.backprop(optimizer, logits, movement)
@@ -163,17 +165,18 @@ def train(args, config):
 							titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
 							tech_indicators = tech_indicators.permute(1, 0, 2)
 
+							titles = titles.to(device)
+							tech_indicators = tech_indicators.to(device)
+							movement = movement.to(device)
+
 							logits = model.forward(titles,tech_indicators)
 
-							titles.to(device)
-							tech_indicators.to(device)
-							movement.to(device)
 
 							loss_fn = nn.NLLLoss(reduce = True, reduction = 'mean')
 							loss_val = loss_fn(logits, movement)
 							accuracy = get_accuracy(logits,movement)
-							avg_val_accuracy.append(accuracy.numpy())
-							avg_val_loss.append(loss_val.numpy())
+							avg_val_accuracy.append(accuracy.cpu().numpy())
+							avg_val_loss.append(loss_val.cpu().numpy())
 
 					avg_val_accuracy = np.mean(avg_val_accuracy)
 					avg_val_loss = np.mean(avg_val_loss)						
@@ -185,7 +188,7 @@ def train(args, config):
 					train_losses.append(loss)
 					train_accs.append(accuracy)
 
-				pbar.update(1)
+					pbar.update(1)
 
 			if epoch % print_every == 0: 
 				print ("Epoch: {}, Training iter: {}, Time since start: {}, Loss: {}, Training Accuracy: {}".format(epoch, train_ctr, (time.time() - start), loss, accuracy))
@@ -244,7 +247,7 @@ def test(args, config):
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	load_path = main_model_path 
 
-	model = RCNN_concat_outputs(config)
+	model =  RCNN_seq_attn(config)
 	model.to(device)
 
 	if (load_path != None):  #If model is retrained from saved ckpt
@@ -272,9 +275,10 @@ def test(args, config):
 		for index, sample in enumerate(dataloader_test):
 
 			titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
-			titles.to(device)
-			tech_indicators.to(device)
-			movement.to(device)
+			tech_indicators = tech_indicators.permute(1, 0, 2)
+			titles = titles.to(device)
+			tech_indicators = tech_indicators.to(device)
+			movement = movement.to(device)
 
 			logits = model.forward(titles, tech_indicators)
 			temp_criterion = nn.NLLLoss(reduce = True, reduction = 'mean')
@@ -282,9 +286,9 @@ def test(args, config):
 
 			accuracy = get_accuracy(logits, movement) #Accuracy over entire mini-batch
 			
-			test_loss.append(loss.detach().numpy())
+			test_loss.append(loss.detach().cpu().numpy())
 
-			test_accuracy.append(accuracy.detach().numpy())
+			test_accuracy.append(accuracy.detach().cpu().numpy())
 			#Training step
 
 

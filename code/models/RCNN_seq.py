@@ -195,7 +195,7 @@ class RCNN_seq_attn(nn.Module):
 
 		lstm_outputs_reshaped = lstm_outputs.permute(1, 2, 0) #(batch, hidden_sz, seq_len)
 
-		print(lstm_outputs_reshaped.shape)
+		# print(lstm_outputs_reshaped.shape)
 		# last_hidden = last_hidden.view(batch_sz, -1) #out: (batch, 2 * hidden_size)
 		# last_cell = last_cell.view(batch_sz, -1)
 
