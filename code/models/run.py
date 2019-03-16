@@ -37,7 +37,7 @@ print(sys.path)
 import data_utils
 
 from RCNN_base import Config_base, RCNN_base
-from RCNN_seq import Config_seq, RCNN_seq
+from RCNN_seq import Config_seq, RCNN_seq, RCNN_seq_attn
 from RCNN import Config, RCNN
 from RCNN_concat_outputs import Config_concat,RCNN_concat_outputs
 
@@ -45,7 +45,7 @@ from torch.utils.data import DataLoader
 
 
 
-main_model_path = "../../trained_models/RCNN_seq/RCNN_seq.pt"
+main_model_path = "../../trained_models/RCNN_seq_attn/RCNN_seq_attn.pt"
 
 def backprop(optimizer, logits, labels):
 
@@ -80,7 +80,7 @@ def train(args, config):
 	#Stores hyperparams for model
 	
 
-	model = RCNN_seq(config)
+	model = RCNN_seq_attn(config)
 	model.to(device)
 
 	optimizer = torch.optim.SGD(model.parameters(), lr= optimizer_step, momentum = optimizer_momentum)

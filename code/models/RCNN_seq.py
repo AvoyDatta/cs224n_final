@@ -49,6 +49,10 @@ class Config_seq():
 		self.num_LSTM_layers = num_LSTM_layers
 
 
+
+"""
+RCNN_seq WITHOUT ATTENTION
+"""
 class RCNN_seq(nn.Module):
 	def __init__(self, config):
 
@@ -84,6 +88,46 @@ class RCNN_seq(nn.Module):
 		tech_indicators: Batched tensor of tech indicators. Each batch element has indicators (dim 7) for a window of size n = 5. Expected dims: (seq_len, batch, input_dim)
 	"""
 
+"""
+RCNN_seq WITH ATTENTION
+"""
+class RCNN_seq_attn(nn.Module):
+	def __init__(self, config):
+
+		super(RCNN_seq_attn,self).__init__()
+		self.config = config
+		self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+		##print("RCNN_seq config: ", config.__dict__)
+		self.conv_title = nn.Conv1d(config.title_dim, config.n_filters_title, config.filter_sz_title)
+
+		self.max_pool_title = nn.MaxPool1d(config.max_title_len - config.filter_sz_title + 1)
+		self.relu_title = nn.ReLU()
+		self.relu_day = nn.ReLU()
+		self.relu_attn = nn.ReLU()
+
+		#self.dropout = nn.Dropout(config.p_drop)
+		self.conv_day = nn.Conv1d(config.n_filters_title, config.n_filters_day, config.filter_sz_day)
+		self.max_pool_day = nn.MaxPool1d(config.num_titles - config.filter_sz_day + 1)
+
+		self.lstm = nn.LSTM(config.input_dim_LSTM, config.n_hidden_LSTM, num_layers = config.num_LSTM_layers)
+
+		#self.lstm2 = nn.LSTM(config.input_dim_2, config.n_hidden_LSTM_tech)
+
+		self.map_down = nn.Linear(config.n_hidden_LSTM, 16) #Maps down the attn proj 
+		#Linearly project final hidden states from LSTM to sigmoid output
+		self.map_to_out = nn.Linear(16, config.n_outputs)
+
+		self.log_softmax = nn.LogSoftmax(dim = 1) 
+		self.criterion = nn.NLLLoss(reduction = True, reduce = 'mean')
+		self.attn_vector = torch.randn(config.window_len_titles, 1, device = self.device, requires_grad=True) #Shape: (window_len, 1)
+		
+	"""
+	Forward pass for the RCNN_seq_attn.
+	Inputs: 
+		titles: Batched Tensor of news embedding vectors. Shape: (Batch, window_len_days, num_titles_per_day, embed_size, max_words_in_title)
+		tech_indicators: Batched tensor of tech indicators. Each batch element has indicators (dim 7) for a window of size n = 5. Expected dims: (seq_len, batch, input_dim)
+	"""
 	def forward(self, titles, tech_indicators):
 		batch_sz = titles.size(0)
 
@@ -148,16 +192,19 @@ class RCNN_seq(nn.Module):
 
 		lstm_outputs, (last_hidden, last_cell) = self.lstm(concat_input) #outputs shape: (seq_len, batch, hidden_sz). Both hidden & cell are (2, batch, hidden_size)
 
-		last_hidden = last_hidden.view(batch_sz, -1) #out: (batch, 2 * hidden_size)
-		last_cell = last_cell.view(batch_sz, -1)
+		lstm_outputs_reshaped = lstm_outputs.permute(1, 2, 0) #(batch, hidden_sz, seq_len)
 
-		lstm_hidden_concat = torch.cat((last_hidden, last_cell), 1)
+		print(lstm_outputs_reshaped.shape)
+		# last_hidden = last_hidden.view(batch_sz, -1) #out: (batch, 2 * hidden_size)
+		# last_cell = last_cell.view(batch_sz, -1)
 
-		end_states_concatenated = torch.cat((last_hidden, last_cell), dim = 1)
+		attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
+		attn_proj = attn_proj.squeeze(-1)
+		print("Attn proj: ", attn_proj.shape)
 
 		#print("Concatenated end states: ", end_states_concatenated.shape)
 
-		mapped_down = self.map_down(end_states_concatenated)
+		mapped_down = self.relu_attn(self.map_down(attn_proj))
 
 		output = self.log_softmax(self.map_to_out(mapped_down)) #(batch, 2)
 		#print(output.shape)
@@ -177,7 +224,7 @@ if __name__ == "__main__":
 
 
 	config.batch_sz = 32
-	model = RCNN_seq(config)
+	model = RCNN_seq_attn(config)
 	# batch_sz, sent_embed_sz, num_titles)
 	tech_indicators = torch.randn(32, 5,7)
 	titles = torch.randn(32, 5, 25, config.title_dim, 56)
