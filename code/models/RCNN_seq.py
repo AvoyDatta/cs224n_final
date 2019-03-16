@@ -120,8 +120,9 @@ class RCNN_seq_attn(nn.Module):
 
 		self.log_softmax = nn.LogSoftmax(dim = 1) 
 		self.criterion = nn.NLLLoss(reduction = True, reduce = 'mean')
-		self.attn_vector = torch.randn(config.window_len_titles, 1, device = self.device, requires_grad=True) #Shape: (window_len, 1)
-		
+		#self.attn_vector = torch.autograd.Variable(torch.randn(config.window_len_titles, 1, device = self.device), requires_grad=True) #Shape: (window_len, 1)
+		self.attn_vector = nn.Parameter(torch.randn(config.window_len_titles, 1, device = self.device))  #Shape: (window_len, 1)
+
 	"""
 	Forward pass for the RCNN_seq_attn.
 	Inputs: 
@@ -200,6 +201,8 @@ class RCNN_seq_attn(nn.Module):
 
 		attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
 		attn_proj = attn_proj.squeeze(-1)
+		print(self.attn_vector.data)
+		print(self.attn_vector.data.grad)
 		print("Attn proj: ", attn_proj.shape)
 
 		#print("Concatenated end states: ", end_states_concatenated.shape)
@@ -214,6 +217,7 @@ class RCNN_seq_attn(nn.Module):
 
 		optimizer.zero_grad()
 		loss = self.criterion(logits,labels)
+		print(loss)
 		loss.backward()
 		optimizer.step()
 		return loss
@@ -225,6 +229,9 @@ if __name__ == "__main__":
 
 	config.batch_sz = 32
 	model = RCNN_seq_attn(config)
+	for name, param in model.named_parameters():
+		if param.requires_grad:
+			print (name, param.data)
 	# batch_sz, sent_embed_sz, num_titles)
 	tech_indicators = torch.randn(32, 5,7)
 	titles = torch.randn(32, 5, 25, config.title_dim, 56)
