@@ -1,5 +1,11 @@
 import torch
-import torch.nn as nn 
+import torch.nn as nn
+from graphviz import Digraph
+import re
+import torch
+from torch.autograd import Variable
+import torchviz
+
 
 class Config_seq(): 
 	def __init__(self, 
@@ -201,9 +207,9 @@ class RCNN_seq_attn(nn.Module):
 
 		attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
 		attn_proj = attn_proj.squeeze(-1)
-		print(self.attn_vector.data)
-		print(self.attn_vector.data.grad)
-		print("Attn proj: ", attn_proj.shape)
+		# print(self.attn_vector.data)
+		# print(self.attn_vector.data.grad)
+		# print("Attn proj: ", attn_proj.shape)
 
 		#print("Concatenated end states: ", end_states_concatenated.shape)
 
@@ -217,7 +223,7 @@ class RCNN_seq_attn(nn.Module):
 
 		optimizer.zero_grad()
 		loss = self.criterion(logits,labels)
-		print(loss)
+		# print(loss)
 		loss.backward()
 		optimizer.step()
 		return loss
@@ -225,30 +231,35 @@ class RCNN_seq_attn(nn.Module):
 
 if __name__ == "__main__":
 	config = Config_seq()
-
+	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 	config.batch_sz = 32
-	model = RCNN_seq_attn(config)
+	model = RCNN_seq_attn(config).to(device)
 	for name, param in model.named_parameters():
 		if param.requires_grad:
 			print (name, param.data)
 	# batch_sz, sent_embed_sz, num_titles)
-	tech_indicators = torch.randn(32, 5,7)
-	titles = torch.randn(32, 5, 25, config.title_dim, 56)
+	tech_indicators = torch.randn(32, 5,7).to(device)
+	titles = torch.randn(32, 5, 25, config.title_dim, 56).to(device)
+	# inputs = titles,tech_indicators
+	y = model.forward(Variable(titles),Variable(tech_indicators.permute(1,0,2)))
 
-	y =torch.randint(0,2,(config.batch_sz,1))
-	y = torch.squeeze(y)
-	# ##print(y)
-	optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
-	num_iters=10000
-	for t in range(num_iters):
-	    # Forward pass: Compute predicted y by passing x to the model
-	    y_pred = model.forward(titles,tech_indicators.permute(1,0,2))
-	    # ##print(y_pred)
-	    # y_pred = torch.randn(config.batch_sz,1)
-	    ###print("y_pred shape: {}".format(y_pred.size()))
-	    # Compute and ##print loss
-	    loss = model.backprop(optimizer, y_pred, y)
-	    #if t % 10== 0: #print(t, loss.item())
+	dot = torchviz.make_dot(y.mean(),params=dict(model.named_parameters()))
+	dot.view()
 
-	    # Zero gradients, perform a backward pass, and update the weights.
+	# y =torch.randint(0,2,(config.batch_sz,1))
+	# y = torch.squeeze(y)
+	# # ##print(y)
+	# optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
+	# num_iters=10000
+	# for t in range(num_iters):
+	#     # Forward pass: Compute predicted y by passing x to the model
+	#     y_pred = model.forward(titles,tech_indicators.permute(1,0,2))
+	#     # ##print(y_pred)
+	#     # y_pred = torch.randn(config.batch_sz,1)
+	#     ###print("y_pred shape: {}".format(y_pred.size()))
+	#     # Compute and ##print loss
+	#     loss = model.backprop(optimizer, y_pred, y)
+	#     #if t % 10== 0: #print(t, loss.item())
+	#
+	#     # Zero gradients, perform a backward pass, and update the weights.
