@@ -186,6 +186,7 @@ class RCNN_seq_attn(nn.Module):
 		super(RCNN_seq_attn,self).__init__()
 		self.config = config
 		self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+		print("Running on device: ", str(self.device))
 
 		##print("RCNN_seq config: ", config.__dict__)
 		self.conv_title = nn.Conv1d(config.title_dim, config.n_filters_title, config.filter_sz_title)
@@ -210,8 +211,10 @@ class RCNN_seq_attn(nn.Module):
 		self.log_softmax = nn.LogSoftmax(dim = 1) 
 		self.criterion = nn.NLLLoss(reduction = True, reduce = 'mean')
 		#self.attn_vector = torch.autograd.Variable(torch.randn(config.window_len_titles, 1, device = self.device), requires_grad=True) #Shape: (window_len, 1)
-		self.attn_vector = nn.Parameter(torch.randn(config.window_len_titles, 1, device = self.device))  #Shape: (window_len, 1)
-
+		#self.attn_vector = nn.Parameter(torch.randn(config.window_len_titles, 1, device = self.device, requires_grad = True), requires_grad = True)  #Shape: (window_len, 1)
+		
+		self.attn_layer = nn.Linear(self.config.window_len_titles, 1, bias = False)
+		print(self.attn_layer.weight)
 	"""
 	Forward pass for the RCNN_seq_attn.
 	Inputs: 
@@ -288,10 +291,14 @@ class RCNN_seq_attn(nn.Module):
 		# last_hidden = last_hidden.view(batch_sz, -1) #out: (batch, 2 * hidden_size)
 		# last_cell = last_cell.view(batch_sz, -1)
 
-		attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
+		# attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
+		attn_proj = self.attn_layer(lstm_outputs_reshaped) #(batch, hidden_sz, 1)
 		attn_proj = attn_proj.squeeze(-1)
 		# print(self.attn_vector.data)
 		# print(self.attn_vector.data.grad)
+		print("Attn proj: ", attn_proj.shape)
+		print(self.attn_layer.weight)
+
 		# print("Attn proj: ", attn_proj.shape)
 
 		#print("Concatenated end states: ", end_states_concatenated.shape)
@@ -318,31 +325,31 @@ if __name__ == "__main__":
 
 	config.batch_sz = 32
 	model = RCNN_seq_attn(config).to(device)
-	for name, param in model.named_parameters():
-		if param.requires_grad:
-			print (name, param.data)
+	# for name, param in model.named_parameters():
+	# 	if param.requires_grad:
+	# 		print (name, param.data)
 	# batch_sz, sent_embed_sz, num_titles)
-	tech_indicators = torch.randn(32, 5,7).to(device)
+	tech_indicators = torch.randn(5, 32,7).to(device)
 	titles = torch.randn(32, 5, 25, config.title_dim, 56).to(device)
 	# inputs = titles,tech_indicators
-	y = model.forward(Variable(titles),Variable(tech_indicators.permute(1,0,2)))
+	y = model.forward(Variable(titles),Variable(tech_indicators))
 
 	dot = torchviz.make_dot(y.mean(),params=dict(model.named_parameters()))
-	dot.view()
+	#dot.view()
 
-	# y =torch.randint(0,2,(config.batch_sz,1))
-	# y = torch.squeeze(y)
-	# # ##print(y)
-	# optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
-	# num_iters=10000
-	# for t in range(num_iters):
-	#     # Forward pass: Compute predicted y by passing x to the model
-	#     y_pred = model.forward(titles,tech_indicators.permute(1,0,2))
-	#     # ##print(y_pred)
-	#     # y_pred = torch.randn(config.batch_sz,1)
-	#     ###print("y_pred shape: {}".format(y_pred.size()))
-	#     # Compute and ##print loss
-	#     loss = model.backprop(optimizer, y_pred, y)
-	#     #if t % 10== 0: #print(t, loss.item())
+	y =torch.randint(0,2,(config.batch_sz,1))
+	y = torch.squeeze(y)
+	# ##print(y)
+	optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
+	num_iters=10000
+	for t in range(num_iters):
+	    # Forward pass: Compute predicted y by passing x to the model
+	    y_pred = model.forward(titles, tech_indicators)
+	    # ##print(y_pred)
+	    # y_pred = torch.randn(config.batch_sz,1)
+	    ###print("y_pred shape: {}".format(y_pred.size()))
+	    # Compute and ##print loss
+	    loss = model.backprop(optimizer, y_pred, y)
+	    if t % 10== 0: print(t, loss.item())
 	#
 	#     # Zero gradients, perform a backward pass, and update the weights.
