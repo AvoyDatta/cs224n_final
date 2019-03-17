@@ -26,26 +26,44 @@ from RCNN_concat_outputs import Config_concat,RCNN_concat_outputs
 
 from torch.utils.data import DataLoader
 
+main_model_path = "../../trained_models/RCNN_seq/RCNN_seq.pt"
+
+
 batch_sz = 128
 config = Config_seq()
 model = RCNN_seq(config)
+load_path = main_model_path
+
+if (load_path != None):  # If model is retrained from saved ckpt
+
+
+	print("Loading model from {}".format(load_path))
+	if  torch.cuda.is_available():
+		checkpoint = torch.load(load_path)
+	else:
+		checkpoint = torch.load(load_path,map_location='cpu')
+	model.load_state_dict(checkpoint['model_state_dict'])
+	# optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+	# epoch = checkpoint['epoch']
+	# loss = checkpoint['loss']
+	print("Model successfully loaded from {}".format(load_path))
 
 # store
-data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv', start=None, end=310, randomize_sz=None)
+data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv', start=None, end=None, randomize_sz=None)
 
-q1 = 120  # originally 1600
-q2 = 135  # 1800
-q3 = 150  # 1980
+q1 = 1600  # originally 1600
+q2 = 1800  # 1800
+q3 = 1980  # 1980
 
 data_train = utils.data.Subset(data, [i for i in range(q1)])
-dataloader_train = DataLoader(data_train, batch_size = int(config.batch_sz))
+# dataloader_train = DataLoader(data_train, batch_size = int(config.batch_sz))
 
 data_val = utils.data.Subset(data,[i for i in range(q1+1,q2)])
-dataloader_val = DataLoader(data_val,batch_size=int(batch_sz))
+# dataloader_val = DataLoader(data_val,batch_size=int(batch_sz))
 
 data_test = utils.data.Subset(data, [i for i in range(q2+1, q3)])
 
-dataloader_test = DataLoader(data_test, batch_size = batch_sz)
+# dataloader_test = DataLoader(data_test, batch_size = batch_sz)
 
 
 def run_svm():
@@ -53,22 +71,27 @@ def run_svm():
 	train_input = []
 	train_labels = []
 	print("Loading training data for SVM...")
-	with tqdm(total = len(dataloader_train)) as pbar: # 13
-		for index, sample in enumerate(dataloader_train):		
-			titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
-			tech_indicators = tech_indicators.permute(1, 0, 2)
-			combined = concat_titles_tech(titles, tech_indicators).detach().numpy() #(5,128,71)
-			combined = combined[4]
+	# with tqdm(total = len(dataloader_train)) as pbar: # 13
+	# 	for index, sample in enumerate(dataloader_train):
+	with tqdm(total = len(data_train))as pbar:
+		for i in range(len(data_train)):
+			titles, tech_indicators, movement = data_train[i]['titles'],data_train[i]['tech_indicators'],data_train[i]['movement']
+			titles = titles.unsqueeze(0)
+			tech_indicators = tech_indicators.unsqueeze(0).permute(1, 0, 2)
+			combined = np.concatenate((np.reshape(titles[:,4,:,:,:],-1),np.reshape(tech_indicators,-1)),axis=0)
+			# combined = concat_titles_tech(titles, tech_indicators).detach().numpy() #(5,128,71)
+			# combined = np.reshape(combined[4],newshape=-1)
 			# print(combined.shape)
 			train_input.append(combined)
 			train_labels.append(movement.numpy())
 			pbar.update(1)
-	train_input = np.array(train_input)
+	train_input = np.stack(train_input,axis=0)
 	train_input = np.squeeze(train_input) # causes issues
 	train_labels = np.squeeze(np.array(train_labels))
 
+	print("train input shape: ",train_input.shape )
 	print("Training started...")
-	svc = svm.SVC(kernel='linear')
+	svc = svm.SVC(kernel='rbf')
 	svc.fit(train_input, train_labels)
 	print("Training finished... making predictions...")
 	train_pred = svc.predict(train_input)
@@ -78,22 +101,24 @@ def run_svm():
 	val_input = []
 	val_labels = []
 	print("Loading validation data...")
-	with tqdm(total = len(dataloader_val)) as pbar:
-		for index, sample in enumerate(dataloader_val):		
-			titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
-			tech_indicators = tech_indicators.permute(1, 0, 2)
-			combined = concat_titles_tech(titles, tech_indicators).detach().numpy()
-			combined = combined[4]
+	with tqdm(total = len(data_val))as pbar:
+		for i in range(len(data_val)):
+			titles, tech_indicators, movement = data_val[i]['titles'],data_val[i]['tech_indicators'],data_val[i]['movement']
+			titles = titles.unsqueeze(0)
+			tech_indicators = tech_indicators.unsqueeze(0).permute(1, 0, 2)
+			combined = np.concatenate((np.reshape(titles[:, 4, :, :, :], -1), np.reshape(tech_indicators, -1)), axis=0)
+			# combined = concat_titles_tech(titles, tech_indicators).detach().numpy() #(5,128,71)
+			# combined = np.reshape(combined[4],newshape=-1)
 			val_input.append(combined)
 			val_labels.append(movement.numpy())
 			pbar.update(1)
 
-	val_input = np.array(val_input)
+	val_input = np.stack(val_input,axis=0)
 	val_input = np.squeeze(val_input)
 	val_labels = np.squeeze(np.array(val_labels))
 
 	print("Validation started...")
-	svc.fit(val_input, val_labels)
+	# svc.fit(val_input, val_labels)
 	print("Validation finished... making predictions...")
 	val_pred = svc.predict(val_input)
 	print("Validation accuracy: ", np.mean(val_pred == val_labels))
@@ -103,17 +128,19 @@ def run_svm():
 	test_input = []
 	test_labels = []
 	print("Loading test data...")
-	with tqdm(total = len(dataloader_test)) as pbar:
-		for index, sample in enumerate(dataloader_test):
-			titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
-			tech_indicators = tech_indicators.permute(1, 0, 2)
-			combined = concat_titles_tech(titles, tech_indicators).detach().numpy()
-			combined = combined[4]
+	with tqdm(total = len(data_test))as pbar:
+		for i in range(len(data_test)):
+			titles, tech_indicators, movement = data_test[i]['titles'],data_test[i]['tech_indicators'],data_test[i]['movement']
+			titles = titles.unsqueeze(0)
+			tech_indicators = tech_indicators.unsqueeze(0).permute(1, 0, 2)
+			combined = np.concatenate((np.reshape(titles[:, 4, :, :, :], -1), np.reshape(tech_indicators, -1)), axis=0)
+			# combined = concat_titles_tech(titles, tech_indicators).detach().numpy() #(5,128,71)
+			# combined = np.reshape(combined[4],newshape=-1)
 			test_input.append(combined)
 			test_labels.append(movement.numpy())
 			pbar.update(1)
 
-	test_input = np.array(test_input)
+	test_input = np.stack(test_input,axis=0)
 	test_input = np.squeeze(test_input)
 	test_labels = np.squeeze(np.array(test_labels))
 
