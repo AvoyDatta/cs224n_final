@@ -94,7 +94,7 @@ def train(args, config):
 	##############LOAD TRAIN DATA and initiate train
 
 	randomize_sz = None if int(args['--randomize_sz']) == -1 else int(args['--randomize_sz'])
-	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
+	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=randomize_sz)
 	data_train = utils.data.Subset(data, [i for i in range(1600)])
 
 	#dataset_val = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
