@@ -211,10 +211,12 @@ class RCNN_seq_attn(nn.Module):
 		self.log_softmax = nn.LogSoftmax(dim = 1) 
 		self.criterion = nn.NLLLoss(reduction = True, reduce = 'mean')
 		#self.attn_vector = torch.autograd.Variable(torch.randn(config.window_len_titles, 1, device = self.device), requires_grad=True) #Shape: (window_len, 1)
-		#self.attn_vector = nn.Parameter(torch.randn(config.window_len_titles, 1, device = self.device, requires_grad = True), requires_grad = True)  #Shape: (window_len, 1)
-		
-		self.attn_layer = nn.Linear(self.config.window_len_titles, 1, bias = False)
-		print(self.attn_layer.weight)
+		self.attn_vector = nn.Parameter(torch.FloatTensor(config.window_len_titles, 1, device = self.device), requires_grad = True)  #Shape: (window_len, 1)
+		self.attn_vector.data = torch.rand(config.window_len_titles, 1, device = self.device)
+
+		self.eps_attn = float(1e-2)
+		#self.attn_layer = nn.Linear(self.config.window_len_titles, 1, bias = False)
+		#print(self.attn_layer.weight)
 	"""
 	Forward pass for the RCNN_seq_attn.
 	Inputs: 
@@ -291,10 +293,12 @@ class RCNN_seq_attn(nn.Module):
 		# last_hidden = last_hidden.view(batch_sz, -1) #out: (batch, 2 * hidden_size)
 		# last_cell = last_cell.view(batch_sz, -1)
 
-		# attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
-		attn_proj = self.attn_layer(lstm_outputs_reshaped) #(batch, hidden_sz, 1)
+		self.attn_vector.data = self.attn_vector.data.clamp(min = self.eps_attn) 
+		self.attn_vector.data = self.attn_vector.data / self.attn_vector.data.sum(0, keepdim=True)
+		attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
+		#attn_proj = self.softmax(self.attn_layer(lstm_outputs_reshaped)) #(batch, hidden_sz, 1)
 		attn_proj = attn_proj.squeeze(-1)
-		# print(self.attn_vector.data)
+		print(self.attn_vector.data, self.attn_vector.data.sum(0))
 		# print(self.attn_vector.data.grad)
 		#print("Attn proj: ", attn_proj.shape)
 		#print(self.attn_layer.weight)
@@ -340,7 +344,7 @@ if __name__ == "__main__":
 	y =torch.randint(0,2,(config.batch_sz,1))
 	y = torch.squeeze(y)
 	# ##print(y)
-	optimizer = torch.optim.SGD(model.parameters(), lr=1e-2)
+	optimizer = torch.optim.SGD(model.parameters(), lr=1e1)
 	num_iters=10000
 	for t in range(num_iters):
 	    # Forward pass: Compute predicted y by passing x to the model
