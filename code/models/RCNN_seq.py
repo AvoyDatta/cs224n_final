@@ -211,9 +211,9 @@ class RCNN_seq_attn(nn.Module):
 		self.log_softmax = nn.LogSoftmax(dim = 1) 
 		self.criterion = nn.NLLLoss(reduction = True, reduce = 'mean')
 		#self.attn_vector = torch.autograd.Variable(torch.randn(config.window_len_titles, 1, device = self.device), requires_grad=True) #Shape: (window_len, 1)
-		self.attn_vector = nn.Parameter(torch.FloatTensor(config.window_len_titles, 1, device = self.device), requires_grad = True)  #Shape: (window_len, 1)
-		self.attn_vector.data = torch.rand(config.window_len_titles, 1, device = self.device)
-
+		self.attn_vector = nn.Parameter(torch.rand(config.window_len_titles, 1, device = self.device), requires_grad = True)  #Shape: (window_len, 1)
+		#self.attn_vector.data = 
+		#torch.FloatTensor(config.window_len_titles, 1, device = self.device)
 		self.eps_attn = float(1e-2)
 		#self.attn_layer = nn.Linear(self.config.window_len_titles, 1, bias = False)
 		#print(self.attn_layer.weight)
