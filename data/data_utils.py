@@ -15,8 +15,8 @@ import os
 from tqdm import tqdm
 import time
 import random
-nltk.download('punkt')
-nltk.download("stopwords")
+# nltk.download('punkt')
+# nltk.download("stopwords")
 
 
 # nltk.download('punkt')
@@ -318,7 +318,7 @@ def loadTitle(input_csv_path, n=5, randomize_sz=None,start=None,end=None):
 
 			# title choice randomization
 			if randomize_sz is not None:
-				random.shuffle(data_row for data_row in data_window)
+				random.shuffle([data_row for data_row in data_window])
 				for row_index in range(len(data_window)):
 					data_row = data_window[row_index]
 					aux = []
