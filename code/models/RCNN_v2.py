@@ -12,7 +12,7 @@ class Config_v2():
 				num_titles = 25, 
 				title_dim = 300, 
 				n_tech_indicators = 7,
-				n_hidden_LSTM_titles_sentence = 128, 
+				n_hidden_LSTM_titles_sentence = 256, 
 				n_hidden_LSTM_titles_window = 128, 
 
 				n_hidden_LSTM_tech = 128, 
@@ -159,7 +159,7 @@ class RCNN_v2(nn.Module):
 		#print("tech_out", tech_out.shape)
 		###############################Combined##################################################
 		output = self.aggregate(torch.cat((titles_out, tech_out), 1)) #(batch, 2) 
-		
+
 		#print(output.data)
 		# attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
 		# attn_proj = attn_proj.squeeze(-1)
