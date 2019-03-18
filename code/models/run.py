@@ -39,6 +39,7 @@ import data_utils
 from RCNN_base import Config_base, RCNN_base
 from RCNN_seq import Config_seq, RCNN_seq, RCNN_seq_attn
 from RCNN_v2 import Config_v2, RCNN_v2
+from RCNN_v2_ti import Config_v2_ti, RCNN_v2_ti
 from RCNN import Config, RCNN
 from RCNN_concat_outputs import Config_concat,RCNN_concat_outputs
 
@@ -46,7 +47,7 @@ from torch.utils.data import DataLoader
 
 
 
-main_model_path = "../../trained_models/RCNN_v2/RCNN_v2.pt"
+main_model_path = "../../trained_models/RCNN_v2/RCNN_v2_ti.pt"
 
 def backprop(optimizer, logits, labels):
 
@@ -80,7 +81,7 @@ def train(args, config):
 	#Stores hyperparams for model
 	
 
-	model = RCNN_v2(config)
+	model = RCNN_v2_ti(config)
 	model.to(device)
 
 	optimizer = torch.optim.SGD(model.parameters(), lr= optimizer_step, momentum = optimizer_momentum)
@@ -249,7 +250,7 @@ def test(args, config):
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	load_path = main_model_path 
 
-	model =  RCNN_v2(config)
+	model =  RCNN_v2_ti(config)
 	model.to(device)
 
 	if (load_path != None):  #If model is retrained from saved ckpt
@@ -307,7 +308,7 @@ def test(args, config):
 def main():
 	args = docopt(__doc__)
 
-	config = Config_v2(batch_sz = int(args['--batch_sz']))
+	config = Config_v2_ti(batch_sz = int(args['--batch_sz']))
 
 	if args['train']:
 
