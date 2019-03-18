@@ -470,11 +470,11 @@ class RCNN_seq_attn(nn.Module):
 
 		self.log_softmax = nn.LogSoftmax(dim=1)
 		self.criterion = nn.NLLLoss(reduction=True, reduce='mean')
-		# self.attn_vector = torch.autograd.Variable(torch.randn(config.window_len_titles, 1, device = self.device), requires_grad=True) #Shape: (window_len, 1)
-		# self.attn_vector = nn.Parameter(torch.randn(config.window_len_titles, 1, device = self.device, requires_grad = True), requires_grad = True)  #Shape: (window_len, 1)
+		#self.attn_vector = torch.autograd.Variable(torch.randn(config.window_len_titles, 1, device = self.device), requires_grad=True) #Shape: (window_len, 1)
+		self.attn_vector = nn.Parameter(torch.randn(config.window_len_titles, 1, device = self.device, requires_grad = True), requires_grad = True)  #Shape: (window_len, 1)
 
-		self.attn_layer = nn.Linear(self.config.window_len_titles, 1, bias=False)
-		print(self.attn_layer.weight)
+		# self.attn_layer = nn.Linear(self.config.window_len_titles, 1, bias=False)
+		# print(self.attn_layer.weight)
 
 	"""
 	Forward pass for the RCNN_seq_attn.
@@ -563,8 +563,11 @@ class RCNN_seq_attn(nn.Module):
 		# last_hidden = last_hidden.view(batch_sz, -1) #out: (batch, 2 * hidden_size)
 		# last_cell = last_cell.view(batch_sz, -1)
 
-		# attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
-		attn_proj = self.attn_layer(lstm_outputs_reshaped)  # (batch, hidden_sz, 1)
+		self.attn_vector.data = self.attn_vector.data.clamp(self.eps) 
+
+		self.attn_vector.data = self.attn_vector.data / torch.sum(self.attn_vector.data, 1)
+		attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
+		#attn_proj = self.attn_layer(lstm_outputs_reshaped)  # (batch, hidden_sz, 1)
 		attn_proj = attn_proj.squeeze(-1)
 		# print(self.attn_vector.data)
 		# print(self.attn_vector.data.grad)
@@ -579,7 +582,7 @@ class RCNN_seq_attn(nn.Module):
 
 		output = self.log_softmax(self.map_to_out(mapped_down))  # (batch, 2)
 		# print(output.shape)
-		return output,self.attn_layer.weight.cpu().detach().numpy()
+		return output,self.attn_vector.data.cpu().numpy()
 
 	def backprop(self, optimizer, logits, labels):
 		optimizer.zero_grad()
