@@ -98,18 +98,18 @@ class RCNN_v2(nn.Module):
 	def forward(self, titles, tech_indicators):
 		batch_sz = titles.size(0)
 
-		print("Input titles shape: ", titles.shape)
-		print("Input tech indicators: ", tech_indicators.shape)
+		#print("Input titles shape: ", titles.shape)
+		#print("Input tech indicators: ", tech_indicators.shape)
 		#########################Titles#################################################################
 
 		titles_reshaped = titles.contiguous().view(batch_sz * titles.size(1) * titles.size(2), titles.size(4), titles.size(3)) 
 		#(batch * window_len_days * num_titles_day, max_words, embed_size)
-		print("reshape initial:", titles_reshaped.shape)
+		#print("reshape initial:", titles_reshaped.shape)
 
 		_, (sents_h, sents_c) = self.lstm_titles_sentence(titles_reshaped) #sents_h: (2, new_batch, n_hidden)
-		print("Sentence embeddings: ", sents_h.shape)
+		#print("Sentence embeddings: ", sents_h.shape)
 		cat_sents = torch.cat((sents_h[0, :, :].squeeze(0), sents_h[1, :, :].squeeze(0), sents_c[0, :, :].squeeze(0), sents_c[1, :, :].squeeze(0)), 1) #(batch * window_len_days * num_titles_day, 4*n_hidden)
-		print("sents cat:", cat_sents.shape)
+		#print("sents cat:", cat_sents.shape)
 
 		cat_sent_embeds = cat_sents.contiguous().view(batch_sz * self.config.window_len_titles, self.config.num_titles, 4 * self.config.n_hidden_LSTM_titles_sentence) 
 		#(batch * window_days,  num_titles, 4*n_hidden_sents)
@@ -118,19 +118,19 @@ class RCNN_v2(nn.Module):
 
 		conv_day_out = self.conv_titles_day(cat_sent_embeds) #(batch * window_days, n_filters_day, num_titles - filter_sz_day + 1)
 				
-		print("Conv_day_out: ", conv_day_out.shape)
+		#print("Conv_day_out: ", conv_day_out.shape)
 		
 		conv_day_pool_out = self.max_pool_day(conv_day_out) #Out: (batch * window_len_titles, n_filters_day, 1)
-		print("Conv day pool out: ", conv_day_pool_out.shape)
+		#print("Conv day pool out: ", conv_day_pool_out.shape)
 		
 		conv_day_pool_out = conv_day_pool_out.contiguous().view(batch_sz, self.config.window_len_titles, self.config.n_filters_day, 1)
 		#(batch, window_len_titles, num_filters_day, 1)
-		print("reshape after conv pool:", conv_day_pool_out.shape)
+		#print("reshape after conv pool:", conv_day_pool_out.shape)
 
 		conv_day_pool_out = conv_day_pool_out.squeeze(-1) #Out: (batch, window_len_titles, n_filters_day)
 
 		relud_pool_day = self.relu(conv_day_pool_out) #Out: (batch, window_len_titles, num_filters_day)
-		print("Relud_pool_day: ", relud_pool_day.shape)
+		#print("Relud_pool_day: ", relud_pool_day.shape)
 
 		# dropped_relu = self.dropout(relud_pool) #(batch, num_filters, L - R + 2) #NOT SURE ABOUT DIMENSION DROPPED
 		##print(dropped_relu.shape)
@@ -140,32 +140,32 @@ class RCNN_v2(nn.Module):
 		_, (titles_h, titles_c) = self.lstm_titles_window(relud_pool_day_reshaped) #titles_h: (2, batch, n_hidden_titles_window)
 
 		cat_titles_days = torch.cat((titles_h[0, :, :].squeeze(0), titles_h[1, :, :].squeeze(0), titles_c[0, :, :].squeeze(0), titles_c[1, :, :].squeeze(0)), 1) #(batch, 4 * n_hidden_titles_window)
-		print("cat titles day", cat_titles_days.shape)
+		#print("cat titles day", cat_titles_days.shape)
 
 		mapped_down_titles = self.relu(self.map_titles_down(cat_titles_days)) #(batch, 16)
 		titles_out = self.softmax(self.map_titles_out(mapped_down_titles))  #(batch, 2)
-		print(titles_out.data)
-		print("Titles out: ", titles_out.shape)
+		#print(titles_out.data)
+		#print("Titles out: ", titles_out.shape)
 		#########################Tech Indicators################################################
 
 		_, (tech_h, tech_c) = self.lstm_tech(tech_indicators) #titles_h: (2, batch, n_hidden_tech)
 
 		cat_tech = torch.cat((tech_h[0, :, :].squeeze(0), tech_h[1, :, :].squeeze(0), tech_c[0, :, :].squeeze(0), tech_c[1, :, :].squeeze(0)), 1) #(batch, 4 * n_hidden_titles_window)
-		print("cat_tech", cat_tech.shape)
+		#print("cat_tech", cat_tech.shape)
 
 		mapped_down_tech = self.relu(self.map_tech_down(cat_tech)) #(batch, 16)
 		tech_out = self.softmax(self.map_tech_out(mapped_down_tech))  #(batch, 2)
-		print(tech_out.data)
-		print("tech_out", tech_out.shape)
+		#print(tech_out.data)
+		#print("tech_out", tech_out.shape)
 		###############################Combined##################################################
 		output = self.aggregate(torch.cat((titles_out, tech_out), 1)) #(batch, 2) 
 
-		print(output.data)
+		#print(output.data)
 		# attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
 		# attn_proj = attn_proj.squeeze(-1)
 
 		output = self.log_softmax(output) #(batch, 2)
-		print(output.shape)
+		#print(output.shape)
 		return output
 
 

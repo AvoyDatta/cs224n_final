@@ -146,12 +146,15 @@ def train(args, config):
 					# print("tech_indicators sample dim: ", tech_indicators.shape, "titles sample dim: ", titles.shape)
 
 
-
 					titles = titles.to(device)
 					tech_indicators = tech_indicators.to(device)
 					movement = movement.to(device)
 
 					logits = model.forward(titles, tech_indicators)
+					
+					if index == 1:
+						print("Predictions: ", torch.argmax(logits, dim = 1), "Labels: ", movement)
+
 					loss = model.backprop(optimizer, logits, movement)
 					train_ctr += 1
 					accuracy = get_accuracy(logits, movement) #Accuracy over entire mini-batch
@@ -170,7 +173,6 @@ def train(args, config):
 							movement = movement.to(device)
 
 							logits = model.forward(titles,tech_indicators)
-
 
 							loss_fn = nn.NLLLoss(reduce = True, reduction = 'mean')
 							loss_val = loss_fn(logits, movement)
