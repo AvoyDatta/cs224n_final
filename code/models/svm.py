@@ -61,7 +61,7 @@ def run_svm(data_train,data_test,data_extended_test):
 			titles, tech_indicators, movement = data_train[i]['titles'],data_train[i]['tech_indicators'],data_train[i]['movement']
 			titles = titles.unsqueeze(0)
 			tech_indicators = tech_indicators.unsqueeze(0).permute(1, 0, 2)
-			combined = np.concatenate((np.reshape(titles[:,4,:,:,:],-1),np.reshape(tech_indicators,-1)),axis=0)
+			combined = np.concatenate((np.reshape(titles,-1),np.reshape(tech_indicators,-1)),axis=0)
 			train_input.append(combined)
 			train_labels.append(movement.numpy())
 			pbar.update(1)
@@ -86,7 +86,7 @@ def run_svm(data_train,data_test,data_extended_test):
 			titles, tech_indicators, movement = data_test[i]['titles'],data_test[i]['tech_indicators'],data_test[i]['movement']
 			titles = titles.unsqueeze(0)
 			tech_indicators = tech_indicators.unsqueeze(0).permute(1, 0, 2)
-			combined = np.concatenate((np.reshape(titles[:, 4, :, :, :], -1), np.reshape(tech_indicators, -1)), axis=0)
+			combined = np.concatenate((np.reshape(titles, -1), np.reshape(tech_indicators, -1)), axis=0)
 			# combined = np.reshape(tech_indicators,-1)
 			# combined = concat_titles_tech(titles, tech_indicators).detach().numpy() #(5,128,71)
 			# combined = np.reshape(combined[4],newshape=-1)
@@ -113,7 +113,7 @@ def run_svm(data_train,data_test,data_extended_test):
 			titles, tech_indicators, movement = data_extended_test[i]['titles'],data_extended_test[i]['tech_indicators'],data_extended_test[i]['movement']
 			titles = titles.unsqueeze(0)
 			tech_indicators = tech_indicators.unsqueeze(0).permute(1, 0, 2)
-			combined = np.concatenate((np.reshape(titles[:, 4, :, :, :], -1), np.reshape(tech_indicators, -1)), axis=0)
+			combined = np.concatenate((np.reshape(titles, -1), np.reshape(tech_indicators, -1)), axis=0)
 			extended_test_input.append(combined)
 			extended_test_labels.append(movement.numpy())
 			pbar.update(1)
@@ -134,7 +134,7 @@ def run_svm(data_train,data_test,data_extended_test):
 
 
 if __name__ == "__main__":
-	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv', start=1, end=200, randomize_sz=None)
+	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv', start=None, end=None, randomize_sz=None)
 
 	# q1 = 1600  # originally 1600
 	# q2 = 1800  # 1800
@@ -144,7 +144,7 @@ if __name__ == "__main__":
 	extended_test_split = 0.1
 
 	##chunk dataset
-	window_sz = 50
+	window_sz = 25
 	chunk_sz = len(data)/window_sz
 	chunk_end_idxs = np.linspace(0,len(data),chunk_sz,dtype=int)
 	print(chunk_end_idxs)
