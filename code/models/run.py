@@ -173,7 +173,7 @@ def train(args, config):
 							tech_indicators_val = tech_indicators_val.to(device)
 							movement_val = movement_val.to(device)
 
-							logits_val = model.forward(titles_val,tech_indicators)
+							logits_val = model.forward(titles_val,tech_indicators_val)
 
 							loss_fn = nn.NLLLoss(reduce = True, reduction = 'mean')
 							loss_val = loss_fn(logits_val, movement_val)
