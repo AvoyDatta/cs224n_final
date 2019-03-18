@@ -579,7 +579,7 @@ class RCNN_seq_attn(nn.Module):
 
 		output = self.log_softmax(self.map_to_out(mapped_down))  # (batch, 2)
 		# print(output.shape)
-		return output,self.attn_layer.weight.cpu().numpy()
+		return output,self.attn_layer.weight.cpu().detach().numpy()
 
 	def backprop(self, optimizer, logits, labels):
 		optimizer.zero_grad()
