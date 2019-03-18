@@ -72,7 +72,7 @@ class RCNN_v2_ti(nn.Module):
 
 		# self.lstm_titles_sentence = nn.LSTM(config.title_dim, config.n_hidden_LSTM_titles_sentence, batch_first = True, num_layers = config.num_LSTM_layers)
 		# self.lstm_titles_window = nn.LSTM(config.n_filters_day, config.n_hidden_LSTM_titles_window, batch_first = False, num_layers = config.num_LSTM_layers)
-		# self.lstm_tech = nn.LSTM(config.n_tech_indicators, config.n_hidden_LSTM_tech, batch_first = False, num_layers = config.num_LSTM_layers)
+		self.lstm_tech = nn.LSTM(config.n_tech_indicators, config.n_hidden_LSTM_tech, batch_first = False, num_layers = config.num_LSTM_layers)
 
 		# self.map_titles_down = nn.Linear(4 * config.n_hidden_LSTM_titles_window, 16)
 		# self.map_titles_out = nn.Linear(16, config.n_outputs)
