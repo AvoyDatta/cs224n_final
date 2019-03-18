@@ -95,7 +95,7 @@ class RCNN_v2(nn.Module):
 		titles: Batched Tensor of news embedding vectors. Shape: (Batch, window_len_days, num_titles_per_day, embed_size, max_words_in_title)
 		tech_indicators: Batched tensor of tech indicators. Each batch element has indicators (dim 7) for a window of size n = 5. Expected dims: (seq_len, batch, input_dim)
 	"""
-	def forward(self, titles, tech_indicators):
+	def forward(self, titles, tech_indicators, test = False):
 		batch_sz = titles.size(0)
 
 		#print("Input titles shape: ", titles.shape)
@@ -166,6 +166,10 @@ class RCNN_v2(nn.Module):
 
 		output = self.log_softmax(output) #(batch, 2)
 		#print(output.shape)
+
+		if (test==True):
+
+			output = (output, cat_titles_days)
 		return output
 
 
