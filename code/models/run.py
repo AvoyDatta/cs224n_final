@@ -128,7 +128,7 @@ def train(args, config):
 
 	best_val_acc = 0
 	model.train()
-
+	attn_weights = []
 	start = time.time()
 	print("Model parameters: {}".format(model.config.__dict__))
 	try: 
@@ -150,8 +150,8 @@ def train(args, config):
 					tech_indicators = tech_indicators.to(device)
 					movement = movement.to(device)
 
-					logits = model.forward(titles, tech_indicators)
-					
+					logits,attn_vec = model.forward(titles, tech_indicators)
+					attn_weights.append(attn_vec)
 					if index == 1:
 						print("Predictions: ", torch.argmax(logits, dim = 1), "Labels: ", movement)
 
@@ -173,7 +173,7 @@ def train(args, config):
 							tech_indicators_val = tech_indicators_val.to(device)
 							movement_val = movement_val.to(device)
 
-							logits_val = model.forward(titles_val,tech_indicators_val)
+							logits_val,_ = model.forward(titles_val,tech_indicators_val)
 
 							loss_fn = nn.NLLLoss(reduce = True, reduction = 'mean')
 							loss_val = loss_fn(logits_val, movement_val)
@@ -221,7 +221,7 @@ def train(args, config):
 
 	print("Training completed.")
 
-	return (train_losses, train_accs, loss,val_losses,val_accs, best_val_acc) 
+	return (train_losses, train_accs, loss,val_losses,val_accs, best_val_acc,attn_weights)
 
 def test(args, config):
 	#Get test data & parse
@@ -312,11 +312,12 @@ def main():
 
 	if args['train']:
 
-		train_losses, train_accs, loss,val_losses,val_accs, accuracy = train(args, config)
+		train_losses, train_accs, loss,val_losses,val_accs, accuracy,attn_weights = train(args, config)
 		np.save('train_accs.npy', np.array(train_accs))
 		np.save('train_losses.npy', np.array(train_losses))
 		np.save('val_accs.npy', np.array(val_accs))
 		np.save('val_losses.npy', np.array(val_losses))
+		np.save('attn_weights.npy',np.array(attn_weights))
 		print("Final training loss: {}, Best Validation Accuracy: {}".format(loss, accuracy))
 
 	elif args['test']:
