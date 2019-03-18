@@ -105,6 +105,7 @@ def plot_val_losses():
 	plt.plot(x, train_losses)
 	plt.show()
 
+# def tSNE_plot(model_paths={}):
 
 if __name__== "__main__":
 
