@@ -241,7 +241,7 @@ def train(args, config):
 					'model_state_dict': model.state_dict(), 
 					'optimizer_state_dict': optimizer.state_dict(), 
 					'loss': loss}, 
-					save_path)
+					save_path + ".pt")
 		print ("Saved successfully to {}".format(save_path))
 			
 
