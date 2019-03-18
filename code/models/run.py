@@ -80,7 +80,7 @@ def train(args, config):
 	#Stores hyperparams for model
 	
 
-	model = RCNN_v2(config)
+	model = RCNN_seq_2(config)
 	model.to(device)
 
 	optimizer = torch.optim.SGD(model.parameters(), lr= optimizer_step, momentum = optimizer_momentum)
@@ -250,7 +250,7 @@ def test(args, config):
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	load_path = main_model_path 
 
-	model =  RCNN_v2(config)
+	model =  RCNN_seq_2(config)
 	model.to(device)
 
 	if (load_path != None):  #If model is retrained from saved ckpt
@@ -308,7 +308,7 @@ def test(args, config):
 def main():
 	args = docopt(__doc__)
 
-	config = Config_RCNN_seq(batch_sz = int(args['--batch_sz']))
+	config = Config_seq(batch_sz = int(args['--batch_sz']))
 
 	if args['train']:
 
