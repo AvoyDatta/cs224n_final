@@ -418,6 +418,7 @@ class RCNN_seq_2(nn.Module):
 		last_cell = last_cell.view(batch_sz, -1)
 
 		concat_end_states = torch.cat((last_hidden, last_cell), 1)
+		output = self.log_softmax(self.map_to_out(self.relu_day(self.map_down(concat_end_states))))
 		# attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
 		# attn_proj = attn_proj.squeeze(-1)
 		# print(self.attn_vector.data)			# print(self.attn_vector.data)
@@ -594,7 +595,7 @@ if __name__ == "__main__":
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 	config.batch_sz = 32
-	model = RCNN_seq_attn(config).to(device)
+	model = RCNN_seq_2(config).to(device)
 	# for name, param in model.named_parameters():
 	# 	if param.requires_grad:
 	# 		print (name, param.data)
