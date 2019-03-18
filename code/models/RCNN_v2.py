@@ -21,8 +21,8 @@ class Config_v2():
 				batch_sz = 128,
 				filter_sz_day = 4,
 				n_filters_day= 256,
-				window_len_titles = 5,
-				window_len_tech = 5, 
+				window_len_titles = 3,
+				window_len_tech = 3, 
 				p_drop = 0.5,
 				num_LSTM_layers = 2
 
@@ -143,7 +143,7 @@ class RCNN_v2(nn.Module):
 		#print("cat titles day", cat_titles_days.shape)
 
 		mapped_down_titles = self.relu(self.map_titles_down(cat_titles_days)) #(batch, 16)
-		titles_out = self.softmax(self.map_titles_out(mapped_down_titles))  #(batch, 2)
+		titles_out = self.relu(self.map_titles_out(mapped_down_titles))  #(batch, 2)
 		#print(titles_out.data)
 		#print("Titles out: ", titles_out.shape)
 		#########################Tech Indicators################################################
@@ -154,12 +154,12 @@ class RCNN_v2(nn.Module):
 		#print("cat_tech", cat_tech.shape)
 
 		mapped_down_tech = self.relu(self.map_tech_down(cat_tech)) #(batch, 16)
-		tech_out = self.softmax(self.map_tech_out(mapped_down_tech))  #(batch, 2)
+		tech_out = self.relu(self.map_tech_out(mapped_down_tech))  #(batch, 2)
 		#print(tech_out.data)
 		#print("tech_out", tech_out.shape)
 		###############################Combined##################################################
 		output = self.aggregate(torch.cat((titles_out, tech_out), 1)) #(batch, 2) 
-
+		
 		#print(output.data)
 		# attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
 		# attn_proj = attn_proj.squeeze(-1)
