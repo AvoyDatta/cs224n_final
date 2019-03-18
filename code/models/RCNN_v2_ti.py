@@ -63,7 +63,7 @@ The embedding is concatenated with a tech_indicators vector and passed into an L
 class RCNN_v2_ti(nn.Module):
 	def __init__(self, config, attn = False):
 
-		super(RCNN_v2,self).__init__()
+		super(RCNN_v2_ti,self).__init__()
 		self.config = config
 
 		# ##print("RCNN_seq config: ", config.__dict__)
