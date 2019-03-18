@@ -37,9 +37,8 @@ print(sys.path)
 import data_utils
 
 from RCNN_base import Config_base, RCNN_base
-from RCNN_seq import Config_seq, RCNN_seq, RCNN_seq_attn, RCNN_seq_2
+from RCNN_seq import Config_seq, RCNN_seq, RCNN_seq_attn
 from RCNN_v2 import Config_v2, RCNN_v2
-from RCNN_v2_ti import Config_v2_ti, RCNN_v2_ti
 from RCNN import Config, RCNN
 from RCNN_concat_outputs import Config_concat,RCNN_concat_outputs
 
@@ -47,7 +46,7 @@ from torch.utils.data import DataLoader
 
 
 
-main_model_path = "../../trained_models/RCNN_seq/RCNN_seq_2.pt"
+main_model_path = "../../trained_models/RCNN_v2/RCNN_v2.pt"
 
 def backprop(optimizer, logits, labels):
 
@@ -81,7 +80,7 @@ def train(args, config):
 	#Stores hyperparams for model
 	
 
-	model = RCNN_seq_2(config)
+	model = RCNN_v2(config)
 	model.to(device)
 
 	optimizer = torch.optim.SGD(model.parameters(), lr= optimizer_step, momentum = optimizer_momentum)
@@ -100,7 +99,7 @@ def train(args, config):
 	data_train = utils.data.Subset(data, [i for i in range(1600)])
 
 	#dataset_val = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
-	data_val = utils.data.Subset(data,[i for i in range(1600,1800)])
+	data_val = utils.data.Subset(data,[i for i in range(1800,1980)])
 
 	dataloader_train = DataLoader(data_train, batch_size = int(config.batch_sz))
 	dataloader_val = DataLoader(data_val,batch_size=int(config.batch_sz))
@@ -165,20 +164,26 @@ def train(args, config):
 					avg_val_loss = []
 					model.eval()
 					with torch.no_grad():
+<<<<<<< HEAD
 						for indexval,sampleval in enumerate(dataloader_val):
 							titlesval, tech_indicatorsval, movementval = sampleval['titles'], sampleval['tech_indicators'], sampleval['movement']
 							tech_indicatorsval = tech_indicatorsval.permute(1, 0, 2)
+=======
+						for index,sample in enumerate(dataloader_val):
+							titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
+							tech_indicators = tech_indicators.permute(1, 0, 2)
+>>>>>>> d66f940037c42228a9d33d807e03f16b86f8bd44
 
-							titlesval = titlesval.to(device)
-							tech_indicatorsval = tech_indicatorsval.to(device)
-							movementval = movementval.to(device)
+							titles = titles.to(device)
+							tech_indicators = tech_indicators.to(device)
+							movement = movement.to(device)
 
-							logitsval = model.forward(titlesval,tech_indicatorsval)
+							logits = model.forward(titles,tech_indicators)
 
 							loss_fn = nn.NLLLoss(reduce = True, reduction = 'mean')
 							loss_val = loss_fn(logits, movement)
-							accuracyval = get_accuracy(logits,movement)
-							avg_val_accuracy.append(accuracyval.cpu().numpy())
+							accuracy = get_accuracy(logits,movement)
+							avg_val_accuracy.append(accuracy.cpu().numpy())
 							avg_val_loss.append(loss_val.cpu().numpy())
 
 					avg_val_accuracy = np.mean(avg_val_accuracy)
@@ -241,7 +246,7 @@ def test(args, config):
 
 	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
 
-	data_test = utils.data.Subset(data, [i for i in range(1800, 1980)])
+	data_test = utils.data.Subset(data, [i for i in range(1600, 1800)])
 
 	dataloader_test = DataLoader(data_test, batch_size = config.batch_sz)
 
@@ -250,7 +255,7 @@ def test(args, config):
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	load_path = main_model_path 
 
-	model =  RCNN_seq_2(config)
+	model =  RCNN_v2(config)
 	model.to(device)
 
 	if (load_path != None):  #If model is retrained from saved ckpt
@@ -308,7 +313,7 @@ def test(args, config):
 def main():
 	args = docopt(__doc__)
 
-	config = Config_seq(batch_sz = int(args['--batch_sz']))
+	config = Config_v2(batch_sz = int(args['--batch_sz']))
 
 	if args['train']:
 
