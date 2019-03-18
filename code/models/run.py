@@ -165,20 +165,20 @@ def train(args, config):
 					avg_val_loss = []
 					model.eval()
 					with torch.no_grad():
-						for index,sample in enumerate(dataloader_val):
-							titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
-							tech_indicators = tech_indicators.permute(1, 0, 2)
+						for indexval,sampleval in enumerate(dataloader_val):
+							titlesval, tech_indicatorsval, movementval = sample['titles'], sample['tech_indicators'], sample['movement']
+							tech_indicatorsval = tech_indicatorsval.permute(1, 0, 2)
 
-							titles = titles.to(device)
-							tech_indicators = tech_indicators.to(device)
-							movement = movement.to(device)
+							titlesval = titlesval.to(device)
+							tech_indicatorsval = tech_indicatorsval.to(device)
+							movementval = movementval.to(device)
 
-							logits = model.forward(titles,tech_indicators)
+							logitsval = model.forward(titlesval,tech_indicatorsval)
 
 							loss_fn = nn.NLLLoss(reduce = True, reduction = 'mean')
 							loss_val = loss_fn(logits, movement)
-							accuracy = get_accuracy(logits,movement)
-							avg_val_accuracy.append(accuracy.cpu().numpy())
+							accuracyval = get_accuracy(logits,movement)
+							avg_val_accuracy.append(accuracyval.cpu().numpy())
 							avg_val_loss.append(loss_val.cpu().numpy())
 
 					avg_val_accuracy = np.mean(avg_val_accuracy)
