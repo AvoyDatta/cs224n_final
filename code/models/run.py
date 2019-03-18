@@ -46,7 +46,7 @@ from torch.utils.data import DataLoader
 
 
 
-main_model_path = "../../trained_models/RCNN_seq/RCNN_seq_2.pt"
+main_model_path = "../../trained_models/RCNN_seq_attn/RCNN_seq_attn.pt"
 
 def backprop(optimizer, logits, labels):
 
@@ -80,7 +80,7 @@ def train(args, config):
 	#Stores hyperparams for model
 	
 
-	model = RCNN_seq_2(config)
+	model = RCNN_seq_attn(config)
 	model.to(device)
 
 	optimizer = torch.optim.SGD(model.parameters(), lr= optimizer_step, momentum = optimizer_momentum)
@@ -250,7 +250,7 @@ def test(args, config):
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	load_path = main_model_path 
 
-	model =  RCNN_seq_2(config)
+	model =  RCNN_seq_attn(config)
 	model.to(device)
 
 	if (load_path != None):  #If model is retrained from saved ckpt
