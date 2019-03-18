@@ -61,20 +61,24 @@ The embedding is concatenated with a tech_indicators vector and passed into an L
 
 """
 class RCNN_v2(nn.Module):
-	def __init__(self, config):
+	def __init__(self, config, attn = False):
 
-		super(RCNN_seq,self).__init__()
+		super(RCNN_v2,self).__init__()
 		self.config = config
 
 		# ##print("RCNN_seq config: ", config.__dict__)
-		self.conv_titles_day = nn.Conv1d(4*n_hidden_LSTM_titles_sentence, config.n_filters_day, config.filter_sz_day)
-		self.max_pool_day = nn.MaxPool1d(config.max_title_len - config.filter_sz_title + 1)
+		self.conv_titles_day = nn.Conv1d(4 * config.n_hidden_LSTM_titles_sentence, config.n_filters_day, config.filter_sz_day)
+		self.max_pool_day = nn.MaxPool1d(config.num_titles - config.filter_sz_day + 1)
 
-		self.lstm_titles_sentence = nn.LSTM(self.title_dim, config.n_hidden_LSTM_titles_sentence, batch_first = True, num_layers = config.num_LSTM_layers)
-		self.lstm_titles_window = nn.LSTM(config.input_dim_LSTM, config.n_hidden_LSTM_titles_window, batch_first = False, num_layers = config.num_LSTM_layers)
+		self.lstm_titles_sentence = nn.LSTM(config.title_dim, config.n_hidden_LSTM_titles_sentence, batch_first = True, num_layers = config.num_LSTM_layers)
+		self.lstm_titles_window = nn.LSTM(config.n_filters_day, config.n_hidden_LSTM_titles_window, batch_first = False, num_layers = config.num_LSTM_layers)
 		self.lstm_tech = nn.LSTM(config.n_tech_indicators, config.n_hidden_LSTM_tech, batch_first = False, num_layers = config.num_LSTM_layers)
 
-		self.map
+		self.map_titles_down = nn.Linear(4 * config.n_hidden_LSTM_titles_window, 16)
+		self.map_titles_out = nn.Linear(16, config.n_outputs)
+
+		self.map_tech_down = nn.Linear(4 *config.n_hidden_LSTM_tech, 16)
+		self.map_tech_out = nn.Linear(16, config.n_outputs)
 
 		self.softmax = nn.Softmax(dim = 1)
 		self.relu = nn.ReLU()
@@ -84,7 +88,7 @@ class RCNN_v2(nn.Module):
 		
 
 
-		self.aggregate
+		self.aggregate = nn.Linear(2 * config.n_outputs, config.n_outputs)
 	"""
 	Forward pass for the RCNN.
 	Inputs: 
@@ -94,38 +98,39 @@ class RCNN_v2(nn.Module):
 	def forward(self, titles, tech_indicators):
 		batch_sz = titles.size(0)
 
-		# print("Input titles shape: ", titles.shape)
-		# print("Input tech indicators: ", tech_indicators.shape)
+		print("Input titles shape: ", titles.shape)
+		print("Input tech indicators: ", tech_indicators.shape)
 		#########################Titles#################################################################
 
 		titles_reshaped = titles.contiguous().view(batch_sz * titles.size(1) * titles.size(2), titles.size(4), titles.size(3)) 
 		#(batch * window_len_days * num_titles_day, max_words, embed_size)
-		#print("reshape initial:", titles_reshaped.shape)
+		print("reshape initial:", titles_reshaped.shape)
 
 		_, (sents_h, sents_c) = self.lstm_titles_sentence(titles_reshaped) #sents_h: (2, new_batch, n_hidden)
-		#print("Sentence embeddings: ", sents_h.shape)
+		print("Sentence embeddings: ", sents_h.shape)
 		cat_sents = torch.cat((sents_h[0, :, :].squeeze(0), sents_h[1, :, :].squeeze(0), sents_c[0, :, :].squeeze(0), sents_c[1, :, :].squeeze(0)), 1) #(batch * window_len_days * num_titles_day, 4*n_hidden)
+		print("sents cat:", cat_sents.shape)
 
-		cat_sent_embeds = cat_sents.contiguous().view(batch_sz * self.config.window_len_days, self.config.num_titles, 4 * self.config.n_hidden_LSTM_titles_sentence) 
+		cat_sent_embeds = cat_sents.contiguous().view(batch_sz * self.config.window_len_titles, self.config.num_titles, 4 * self.config.n_hidden_LSTM_titles_sentence) 
 		#(batch * window_days,  num_titles, 4*n_hidden_sents)
 
 		cat_sent_embeds = cat_sent_embeds.permute(0, 2, 1) #(batch * window_days,  4*n_hidden_sents, num_titles)
 
 		conv_day_out = self.conv_titles_day(cat_sent_embeds) #(batch * window_days, n_filters_day, num_titles - filter_sz_day + 1)
 				
-		#print("Conv_day_out: ", conv_day_out.shape)
+		print("Conv_day_out: ", conv_day_out.shape)
 		
-		conv_day_pool_out = self.max_pool_day(conv_out_day) #Out: (batch * window_len_titles, n_filters_day, 1)
-		#print("Conv day pool out: ", conv_day_pool_out.shape)
+		conv_day_pool_out = self.max_pool_day(conv_day_out) #Out: (batch * window_len_titles, n_filters_day, 1)
+		print("Conv day pool out: ", conv_day_pool_out.shape)
 		
 		conv_day_pool_out = conv_day_pool_out.contiguous().view(batch_sz, self.config.window_len_titles, self.config.n_filters_day, 1)
 		#(batch, window_len_titles, num_filters_day, 1)
-		#print("reshape after conv pool:", conv_day_pool_out.shape)
+		print("reshape after conv pool:", conv_day_pool_out.shape)
 
 		conv_day_pool_out = conv_day_pool_out.squeeze(-1) #Out: (batch, window_len_titles, n_filters_day)
 
-		relud_pool_day = self.relu_day(conv_day_pool_out) #Out: (batch, window_len_titles, num_filters_day)
-		#print("Relud_pool_day: ", relud_pool_day.shape)
+		relud_pool_day = self.relu(conv_day_pool_out) #Out: (batch, window_len_titles, num_filters_day)
+		print("Relud_pool_day: ", relud_pool_day.shape)
 
 		# dropped_relu = self.dropout(relud_pool) #(batch, num_filters, L - R + 2) #NOT SURE ABOUT DIMENSION DROPPED
 		##print(dropped_relu.shape)
@@ -135,27 +140,32 @@ class RCNN_v2(nn.Module):
 		_, (titles_h, titles_c) = self.lstm_titles_window(relud_pool_day_reshaped) #titles_h: (2, batch, n_hidden_titles_window)
 
 		cat_titles_days = torch.cat((titles_h[0, :, :].squeeze(0), titles_h[1, :, :].squeeze(0), titles_c[0, :, :].squeeze(0), titles_c[1, :, :].squeeze(0)), 1) #(batch, 4 * n_hidden_titles_window)
+		print("cat titles day", cat_titles_days.shape)
 
 		mapped_down_titles = self.relu(self.map_titles_down(cat_titles_days)) #(batch, 16)
-		titles_out = self.map_titles_out(mapped_down_titles)  #(batch, 2)
-
+		titles_out = self.softmax(self.map_titles_out(mapped_down_titles))  #(batch, 2)
+		print(titles_out.data)
+		print("Titles out: ", titles_out.shape)
 		#########################Tech Indicators################################################
 
 		_, (tech_h, tech_c) = self.lstm_tech(tech_indicators) #titles_h: (2, batch, n_hidden_tech)
 
 		cat_tech = torch.cat((tech_h[0, :, :].squeeze(0), tech_h[1, :, :].squeeze(0), tech_c[0, :, :].squeeze(0), tech_c[1, :, :].squeeze(0)), 1) #(batch, 4 * n_hidden_titles_window)
+		print("cat_tech", cat_tech.shape)
 
 		mapped_down_tech = self.relu(self.map_tech_down(cat_tech)) #(batch, 16)
-		tech_out = self.map_tech_out(mapped_down_tech)  #(batch, 2)
-
+		tech_out = self.softmax(self.map_tech_out(mapped_down_tech))  #(batch, 2)
+		print(tech_out.data)
+		print("tech_out", tech_out.shape)
 		###############################Combined##################################################
 		output = self.aggregate(torch.cat((titles_out, tech_out), 1)) #(batch, 2) 
 
+		print(output.data)
 		# attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
 		# attn_proj = attn_proj.squeeze(-1)
 
 		output = self.log_softmax(output) #(batch, 2)
-		#print(output.shape)
+		print(output.shape)
 		return output
 
 
@@ -171,11 +181,11 @@ class RCNN_v2(nn.Module):
 
 
 if __name__ == "__main__":
-	config = Config_seq()
+	config = Config_v2()
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 	config.batch_sz = 32
-	model = RCNN_seq_attn(config).to(device)
+	model = RCNN_v2(config).to(device)
 	# for name, param in model.named_parameters():
 	# 	if param.requires_grad:
 	# 		print (name, param.data)
