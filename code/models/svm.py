@@ -18,7 +18,7 @@ sys.path.append('../../data/glove.6B/')
 print(sys.path)
 
 import data_utils
-from RCNN_seq import Config_seq, RCNN_seq
+# from RCNN_seq import Config_seq, RCNN_seq
 
 from RCNN_base import Config_base, RCNN_base
 from RCNN import Config, RCNN
@@ -30,43 +30,28 @@ main_model_path = "../../trained_models/RCNN_seq/RCNN_seq.pt"
 
 
 batch_sz = 128
-config = Config_seq()
-model = RCNN_seq(config)
-load_path = main_model_path
-
-if (load_path != None):  # If model is retrained from saved ckpt
-
-
-	print("Loading model from {}".format(load_path))
-	if  torch.cuda.is_available():
-		checkpoint = torch.load(load_path)
-	else:
-		checkpoint = torch.load(load_path,map_location='cpu')
-	model.load_state_dict(checkpoint['model_state_dict'])
-	# optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-	# epoch = checkpoint['epoch']
-	# loss = checkpoint['loss']
-	print("Model successfully loaded from {}".format(load_path))
+# config = Config_seq()
+# model = RCNN_seq(config)
+# load_path = main_model_path
+#
+# if (load_path != None):  # If model is retrained from saved ckpt
+#
+#
+# 	print("Loading model from {}".format(load_path))
+# 	if  torch.cuda.is_available():
+# 		checkpoint = torch.load(load_path)
+# 	else:
+# 		checkpoint = torch.load(load_path,map_location='cpu')
+# 	model.load_state_dict(checkpoint['model_state_dict'])
+# 	# optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+# 	# epoch = checkpoint['epoch']
+# 	# loss = checkpoint['loss']
+# 	print("Model successfully loaded from {}".format(load_path))
 
 # store
-data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv', start=None, end=None, randomize_sz=None)
-
-q1 = 1600  # originally 1600
-q2 = 1800  # 1800
-q3 = 1980  # 1980
-
-data_train = utils.data.Subset(data, [i for i in range(q1)])
-# dataloader_train = DataLoader(data_train, batch_size = int(config.batch_sz))
-
-data_val = utils.data.Subset(data,[i for i in range(q1+1,q2)])
-# dataloader_val = DataLoader(data_val,batch_size=int(batch_sz))
-
-data_test = utils.data.Subset(data, [i for i in range(q2+1, q3)])
-
-# dataloader_test = DataLoader(data_test, batch_size = batch_sz)
 
 
-def run_svm():
+def run_svm(data_train,data_val,data_test):
 	# train
 	train_input = []
 	train_labels = []
@@ -81,6 +66,7 @@ def run_svm():
 			combined = np.concatenate((np.reshape(titles[:,4,:,:,:],-1),np.reshape(tech_indicators,-1)),axis=0)
 			# combined = concat_titles_tech(titles, tech_indicators).detach().numpy() #(5,128,71)
 			# combined = np.reshape(combined[4],newshape=-1)
+			# combined = np.reshape(tech_indicators,-1)
 			# print(combined.shape)
 			train_input.append(combined)
 			train_labels.append(movement.numpy())
@@ -91,7 +77,7 @@ def run_svm():
 
 	print("train input shape: ",train_input.shape )
 	print("Training started...")
-	svc = svm.SVC(kernel='rbf')
+	svc = svm.SVC(kernel='rbf',verbose=True)
 	svc.fit(train_input, train_labels)
 	print("Training finished... making predictions...")
 	train_pred = svc.predict(train_input)
@@ -107,6 +93,7 @@ def run_svm():
 			titles = titles.unsqueeze(0)
 			tech_indicators = tech_indicators.unsqueeze(0).permute(1, 0, 2)
 			combined = np.concatenate((np.reshape(titles[:, 4, :, :, :], -1), np.reshape(tech_indicators, -1)), axis=0)
+			# combined = np.reshape(tech_indicators,-1)
 			# combined = concat_titles_tech(titles, tech_indicators).detach().numpy() #(5,128,71)
 			# combined = np.reshape(combined[4],newshape=-1)
 			val_input.append(combined)
@@ -136,6 +123,7 @@ def run_svm():
 			combined = np.concatenate((np.reshape(titles[:, 4, :, :, :], -1), np.reshape(tech_indicators, -1)), axis=0)
 			# combined = concat_titles_tech(titles, tech_indicators).detach().numpy() #(5,128,71)
 			# combined = np.reshape(combined[4],newshape=-1)
+			# combined = np.reshape(tech_indicators,-1)
 			test_input.append(combined)
 			test_labels.append(movement.numpy())
 			pbar.update(1)
@@ -145,8 +133,14 @@ def run_svm():
 	test_labels = np.squeeze(np.array(test_labels))
 
 	test_pred = svc.predict(test_input)
-	print("Test accuracy: ", np.mean(test_pred == test_labels))
+
+	train_accuracy = np.mean(train_pred == train_labels)
+	val_accuracy =  np.mean(val_pred == val_labels)
+	test_accuracy =  np.mean(test_pred == test_labels)
+	print("extended Test accuracy : ", np.mean(test_pred == test_labels))
 	print(classification_report(test_labels, test_pred))
+
+	return train_accuracy,val_accuracy,test_accuracy
 
 
 def concat_titles_tech(titles, tech_indicators):
@@ -182,6 +176,49 @@ def concat_titles_tech(titles, tech_indicators):
 
 	concat_input = torch.cat((relud_pool_day_reshaped, tech_indicators), dim = 2)
 	return concat_input
+if __name__ == "__main__":
+	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv', start=1, end=400, randomize_sz=None)
 
+	# q1 = 1600  # originally 1600
+	# q2 = 1800  # 1800
+	# q3 = 1980  # 1980
+	train_split = 0.8
+	val_split = 0.1
+	test_split = 0.1
 
-run_svm()
+	##chunk dataset
+	n_chunks = 8
+	# chunk_sz = len(data)/n_chunks
+	chunk_end_idxs = np.linspace(0,len(data),n_chunks,dtype=int)
+	print(chunk_end_idxs)
+	chunk_train_accs = []
+	chunk_val_accs = []
+	chunk_test_accs = []
+	for i in range(1,len(chunk_end_idxs)): #dummy for loop
+		chunk = utils.data.Subset(data,[j for j in range(chunk_end_idxs[i-1],chunk_end_idxs[i])])
+		chunk_len = len(chunk)
+		# print("chunk len: ",chunk_len)
+		# print("chunk idxs: ",chunk_end_idxs[i-1],chunk_end_idxs[i])
+
+		max_idx_train = int(train_split*len(chunk))
+		max_idx_val = max_idx_train + int(val_split*len(chunk))
+		max_idx_test = max_idx_val + int(test_split*len(chunk))
+		data_train = utils.data.Subset(chunk, [i for i in range(max_idx_train)])
+		# dataloader_train = DataLoader(data_train, batch_size = int(config.batch_sz))
+
+		data_val = utils.data.Subset(chunk,[i for i in range(max_idx_train,max_idx_val)])
+		# print("data_val length: ",len(data_val))
+		# dataloader_val = DataLoader(data_val,batch_size=int(batch_sz))
+
+		data_test = utils.data.Subset(chunk, [i for i in range(max_idx_val, max_idx_test)])
+		# print("data_test length: ",len(data_test))
+
+		# dataloader_test = DataLoader(data_test, batch_size = batch_sz)
+
+		train_acc, val_acc,test_acc = run_svm(data_train,data_val,data_test)
+		chunk_train_accs.append(train_acc)
+		chunk_val_accs.append(val_acc)
+		chunk_test_accs.append(test_acc)
+	print("avg training accuracy on windowed set: ",np.mean(chunk_train_accs))
+	print("avg val accuracy on windowed set: ",np.mean(chunk_val_accs))
+	print("avg test accuracy on windowed set",np.mean(chunk_test_accs))
