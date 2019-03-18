@@ -166,7 +166,7 @@ def train(args, config):
 					model.eval()
 					with torch.no_grad():
 						for indexval,sampleval in enumerate(dataloader_val):
-							titlesval, tech_indicatorsval, movementval = sample['titles'], sample['tech_indicators'], sample['movement']
+							titlesval, tech_indicatorsval, movementval = sampleval['titles'], sampleval['tech_indicators'], sampleval['movement']
 							tech_indicatorsval = tech_indicatorsval.permute(1, 0, 2)
 
 							titlesval = titlesval.to(device)
