@@ -12,7 +12,7 @@ class Config_seq():
 	             num_titles=25,
 	             title_dim=300,
 	             n_tech_indicators=7,
-	             n_hidden_LSTM_titles=128,
+	             n_hidden_LSTM_titles=256,
 	             n_hidden_LSTM_tech=50,
 	             n_outputs=2,
 	             batch_sz=128,
