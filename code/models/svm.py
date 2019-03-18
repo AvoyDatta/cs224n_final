@@ -178,7 +178,7 @@ def concat_titles_tech(titles, tech_indicators):
 	return concat_input
 
 if __name__ == "__main__":
-	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv', start=1, end=400, randomize_sz=None)
+	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv', start=1, end=200, randomize_sz=None)
 
 	# q1 = 1600  # originally 1600
 	# q2 = 1800  # 1800
@@ -188,9 +188,9 @@ if __name__ == "__main__":
 	test_split = 0.1
 
 	##chunk dataset
-	n_chunks = 8
-	# chunk_sz = len(data)/n_chunks
-	chunk_end_idxs = np.linspace(0,len(data),n_chunks,dtype=int)
+	window_sz = 50
+	chunk_sz = len(data)/window_sz
+	chunk_end_idxs = np.linspace(0,len(data),chunk_sz,dtype=int)
 	print(chunk_end_idxs)
 	chunk_train_accs = []
 	chunk_extended_test_accs = []
