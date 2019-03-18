@@ -426,6 +426,14 @@ class RCNN_seq_2(nn.Module):
 		# print(output.shape)			#print(output.shape)
 		return output
 
+	def backprop(self, optimizer, logits, labels):
+		optimizer.zero_grad()
+		loss = self.criterion(logits, labels)
+		# print(loss)
+		loss.backward()
+		optimizer.step()
+		return loss
+
 
 """
 RCNN_seq WITH ATTENTION

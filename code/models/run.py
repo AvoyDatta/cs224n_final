@@ -37,7 +37,7 @@ print(sys.path)
 import data_utils
 
 from RCNN_base import Config_base, RCNN_base
-from RCNN_seq import Config_seq, RCNN_seq, RCNN_seq_attn
+from RCNN_seq import Config_seq, RCNN_seq, RCNN_seq_attn, RCNN_seq_2
 from RCNN_v2 import Config_v2, RCNN_v2
 from RCNN import Config, RCNN
 from RCNN_concat_outputs import Config_concat,RCNN_concat_outputs
@@ -46,7 +46,7 @@ from torch.utils.data import DataLoader
 
 
 
-main_model_path = "../../trained_models/RCNN_v2/RCNN_v2.pt"
+main_model_path = "../../trained_models/RCNN_seq/RCNN_seq_2.pt"
 
 def backprop(optimizer, logits, labels):
 
@@ -164,15 +164,10 @@ def train(args, config):
 					avg_val_loss = []
 					model.eval()
 					with torch.no_grad():
-<<<<<<< HEAD
+
 						for indexval,sampleval in enumerate(dataloader_val):
 							titlesval, tech_indicatorsval, movementval = sampleval['titles'], sampleval['tech_indicators'], sampleval['movement']
 							tech_indicatorsval = tech_indicatorsval.permute(1, 0, 2)
-=======
-						for index,sample in enumerate(dataloader_val):
-							titles, tech_indicators, movement = sample['titles'], sample['tech_indicators'], sample['movement']
-							tech_indicators = tech_indicators.permute(1, 0, 2)
->>>>>>> d66f940037c42228a9d33d807e03f16b86f8bd44
 
 							titles = titles.to(device)
 							tech_indicators = tech_indicators.to(device)
@@ -313,7 +308,7 @@ def test(args, config):
 def main():
 	args = docopt(__doc__)
 
-	config = Config_v2(batch_sz = int(args['--batch_sz']))
+	config = Config_RCNN_seq(batch_sz = int(args['--batch_sz']))
 
 	if args['train']:
 
