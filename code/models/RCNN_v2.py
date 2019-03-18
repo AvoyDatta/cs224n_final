@@ -21,8 +21,8 @@ class Config_v2():
 				batch_sz = 128,
 				filter_sz_day = 4,
 				n_filters_day= 256,
-				window_len_titles = 3,
-				window_len_tech = 3, 
+				window_len_titles = 5,
+				window_len_tech = 5, 
 				p_drop = 0.5,
 				num_LSTM_layers = 2
 
