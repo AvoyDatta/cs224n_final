@@ -19,17 +19,22 @@ def plot_tech_indicators(days_to_plot = 100, n_days = 1):
 
 	tech_indicators = data_utils.loadTechnical(technical_csv, n=1, input_size=7) 
 	reshaped_indicators = np.squeeze(tech_indicators.numpy()) #Numpy array of shape (num_days, num_indicators)
+	
 
 	reshaped_indicators = reshaped_indicators[:days_to_plot, :]
 	print(reshaped_indicators.shape)
 
 
 	days = np.arange(1, 101, 1)
-	labels = ["Stoch_K", "Stoch_D", "Momentum", "ROC", "Will's%R", "A/D", "Disp5"]
+	labels = ["Movement", "Stoch_K", "Stoch_D", "Momentum", "ROC", "Will's%R", "A/D", "Disp5"]
 
 	
 	plt.title("Technical indicators for the first {} days".format(days_to_plot))
-	for indicator in range(reshaped_indicators.shape[1]):
+	plt.subplot(7, 1, 1)
+	plt.plot(days, movement[:days_to_plot, indicator], 'rx-')
+	plt.ylabel(labels[0])
+	plt.xlabel("Stock price movement")
+	for indicator in range(1, reshaped_indicators.shape[1] + 1):
 
 		plt.subplot(7, 1, indicator + 1)
 		plt.plot(days, reshaped_indicators[:days_to_plot, indicator], '.-')
@@ -109,6 +114,6 @@ def plot_val_losses():
 if __name__== "__main__":
 
 	plot_tech_indicators(days_to_plot = 100, n_days = 1)
-	plot_val_accs()
-	plot_val_losses()
+	# plot_val_accs()
+	# plot_val_losses()
 
