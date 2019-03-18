@@ -151,7 +151,7 @@ def train(args, config):
 					tech_indicators = tech_indicators.to(device)
 					movement = movement.to(device)
 
-					logits = model.forward(titles, tech_indicators)
+					logits,_ = model.forward(titles, tech_indicators)
 					
 					if index == 1:
 						print("Predictions: ", torch.argmax(logits, dim = 1), "Labels: ", movement)
@@ -174,7 +174,7 @@ def train(args, config):
 							tech_indicators_val = tech_indicators_val.to(device)
 							movement_val = movement_val.to(device)
 
-							logits_val = model.forward(titles_val,tech_indicators_val)
+							logits_val,_ = model.forward(titles_val,tech_indicators_val)
 
 							loss_fn = nn.NLLLoss(reduce = True, reduction = 'mean')
 							loss_val = loss_fn(logits_val, movement_val)
@@ -336,11 +336,11 @@ def test(args, config):
 			tech_indicators = tech_indicators.to(device)
 			movement = movement.to(device)
 
-			logits1 = model1.forward(titles, tech_indicators)
-			logits2 = model2.forward(titles, tech_indicators)
-			logits3 = model3.forward(titles, tech_indicators)
-			logits4 = model4.forward(titles, tech_indicators)
-			logits5 = model5.forward(titles, tech_indicators)
+			logits1,_ = model1.forward(titles, tech_indicators)
+			logits2,_ = model2.forward(titles, tech_indicators)
+			logits3,_ = model3.forward(titles, tech_indicators)
+			logits4,_ = model4.forward(titles, tech_indicators)
+			logits5,_ = model5.forward(titles, tech_indicators)
 
 
 			temp_criterion = nn.NLLLoss(reduce = True, reduction = 'mean')
