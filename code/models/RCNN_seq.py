@@ -163,8 +163,9 @@ class RCNN_seq(nn.Module):
 		last_hidden = last_hidden.view(batch_sz, -1) #out: (batch, 2 * hidden_size)
 		last_cell = last_cell.view(batch_sz, -1)
 
-		attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
-		attn_proj = attn_proj.squeeze(-1)
+		concat_end_states = torch.cat((last_hidden, last_cell), 1)
+		#attn_proj = torch.matmul(lstm_outputs_reshaped, self.attn_vector)
+		#attn_proj = attn_proj.squeeze(-1)
 		# print(self.attn_vector.data)
 		# print(self.attn_vector.data.grad)
 		# print("Attn proj: ", attn_proj.shape)
