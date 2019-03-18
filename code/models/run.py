@@ -47,7 +47,7 @@ from torch.utils.data import DataLoader
 
 
 
-main_model_path = "../../trained_models/RCNN_v2/RCNN_v2_ti.pt"
+main_model_path = "../../trained_models/RCNN_seq/RCNN_seq.pt"
 
 def backprop(optimizer, logits, labels):
 
@@ -81,7 +81,7 @@ def train(args, config):
 	#Stores hyperparams for model
 	
 
-	model = RCNN_v2_ti(config)
+	model = RCNN_seq(config)
 	model.to(device)
 
 	optimizer = torch.optim.SGD(model.parameters(), lr= optimizer_step, momentum = optimizer_momentum)
@@ -100,7 +100,7 @@ def train(args, config):
 	data_train = utils.data.Subset(data, [i for i in range(1600)])
 
 	#dataset_val = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
-	data_val = utils.data.Subset(data,[i for i in range(1800,1980)])
+	data_val = utils.data.Subset(data,[i for i in range(1600,1800)])
 
 	dataloader_train = DataLoader(data_train, batch_size = int(config.batch_sz))
 	dataloader_val = DataLoader(data_val,batch_size=int(config.batch_sz))
@@ -241,7 +241,7 @@ def test(args, config):
 
 	data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv',randomize_sz=None)
 
-	data_test = utils.data.Subset(data, [i for i in range(1600, 1800)])
+	data_test = utils.data.Subset(data, [i for i in range(1800, 1980)])
 
 	dataloader_test = DataLoader(data_test, batch_size = config.batch_sz)
 
@@ -250,7 +250,7 @@ def test(args, config):
 	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 	load_path = main_model_path 
 
-	model =  RCNN_v2_ti(config)
+	model =  RCNN_seq(config)
 	model.to(device)
 
 	if (load_path != None):  #If model is retrained from saved ckpt
@@ -308,7 +308,7 @@ def test(args, config):
 def main():
 	args = docopt(__doc__)
 
-	config = Config_v2_ti(batch_sz = int(args['--batch_sz']))
+	config = Config_seq(batch_sz = int(args['--batch_sz']))
 
 	if args['train']:
 
