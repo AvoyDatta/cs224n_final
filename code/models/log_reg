@@ -1,0 +1,71 @@
+from sklearn.linear_model import LogisticRegression
+import numpy as np
+from tqdm import tqdm
+import torch.utils as utils
+import sys
+sys.path.append('../../data/')
+sys.path.append('../../data/glove.6B/')
+import data_utils
+
+model = LogisticRegression(solver='sag')
+
+def train(train_data, train_labels):
+	print("Fitting training data...")
+	model.fit(train_data, train_labels)
+	print("Done!")
+	print("Making predictions...")
+	train_pred = model.predict(train_data)
+	print("Done!")
+	print("LR TRAIN accuracy: ", np.mean(train_pred == train_labels))
+
+
+def val(val_data, val_labels):
+	val_pred = model.predict(val_data)
+	print("LR VAL accuracy: ", np.mean(val_pred == val_labels))
+
+def test(test_data, test_labels):
+	test_pred = model.predict(test_data)
+	print("LR TEST Accuracy: ", np.mean(test_pred == test_labels))
+
+
+def loadData(data, dataset_type):
+	X = []
+	Y = []
+	print("Loading ", dataset_type, " data for Logistic Regression...")
+	with tqdm(total = len(data))as pbar:
+		for i in range(len(data)):
+			titles, tech_indicators, movement = data[i]['titles'],data[i]['tech_indicators'],data[i]['movement']
+			titles = titles.unsqueeze(0)
+			tech_indicators = tech_indicators.unsqueeze(0).permute(1, 0, 2)
+			combined = np.concatenate((np.reshape(titles[:,4,:,:,:],-1),np.reshape(tech_indicators,-1)),axis=0)
+			X.append(combined)
+			Y.append(movement.numpy())
+			pbar.update(1)
+	X = np.stack(X,axis=0)
+	X = np.squeeze(X)
+	Y = np.squeeze(np.array(Y))
+	return (X, Y)
+
+def main():
+	raw_data = data_utils.DJIA_Dataset('../../data/DJIA_table.csv', '../../data/Combined_News_DJIA.csv', start=None, end=None, randomize_sz=None)
+
+	q1 = 1600  # originally 1600
+	q2 = 1800  # 1800
+	q3 = 1980  # 1980
+
+	data_train = utils.data.Subset(raw_data, [i for i in range(q1)])
+	data_val = utils.data.Subset(raw_data,[i for i in range(q1+1,q2)])
+	data_test = utils.data.Subset(raw_data, [i for i in range(q2+1, q3)])
+
+	train_input, train_labels = loadData(data_train, "TRAINING")
+	val_input, val_labels = loadData(data_val, "VALIDATION")
+	test_input, test_labels = loadData(data_test, "TEST")
+
+	train(train_input, train_labels)
+	val(val_input, val_labels)
+	test(test_input, test_labels)
+
+
+if __name__ == "__main__":
+	main()
+
