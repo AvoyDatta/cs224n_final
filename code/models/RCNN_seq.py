@@ -472,7 +472,7 @@ class RCNN_seq_attn(nn.Module):
 		self.criterion = nn.NLLLoss(reduction=True, reduce='mean')
 		#self.attn_vector = torch.autograd.Variable(torch.randn(config.window_len_titles, 1, device = self.device), requires_grad=True) #Shape: (window_len, 1)
 		self.attn_vector = nn.Parameter(torch.randn(config.window_len_titles, 1, device = self.device, requires_grad = True), requires_grad = True)  #Shape: (window_len, 1)
-
+		self.eps = 0.01
 		# self.attn_layer = nn.Linear(self.config.window_len_titles, 1, bias=False)
 		# print(self.attn_layer.weight)
 
