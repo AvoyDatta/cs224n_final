@@ -13,7 +13,7 @@ class Config_v2():
 				title_dim = 300, 
 				n_tech_indicators = 7,
 				n_hidden_LSTM_titles_sentence = 128, 
-				n_hidden_LSTM_titles_window = 256, 
+				n_hidden_LSTM_titles_window = 128, 
 
 				n_hidden_LSTM_tech = 128, 
 
